@@ -8,8 +8,9 @@ torch.manual_seed(42)
 class GNN(torch.nn.Module):
     def __init__(self, feature_size):
         super(GNN, self).__init__()
-        num_classes = 2
-        embedding_size = 1024
+        num_classes = 3
+        embedding_size = 30 # 1024
+        dense_size = 10 # 1024
     
         # GNN layers
         self.conv1 = GATConv(feature_size, embedding_size, heads=3, dropout=0.3)
@@ -23,8 +24,8 @@ class GNN(torch.nn.Module):
         self.pool3 = TopKPooling(embedding_size, ratio=0.2)
 
         # Linear layers
-        self.linear1 = Linear(embedding_size*2, 1024)
-        self.linear2 = Linear(1024, num_classes)  
+        self.linear1 = Linear(embedding_size * 2, dense_size)
+        self.linear2 = Linear(dense_size, num_classes)  
 
     def forward(self, x, edge_attr, edge_index, batch_index):
         # First block

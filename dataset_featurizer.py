@@ -36,8 +36,8 @@ class DepressionDataset(Dataset):
 
         self.label_to_class = {
             "not depression": 0,
-            "moderate": np.random.randint(0, 2),
-            "severe": 1,
+            "moderate": 1,
+            "severe": 2,
         }
 
         super(DepressionDataset, self).__init__(root, transform, pre_transform)
