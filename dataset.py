@@ -51,8 +51,8 @@ class DepressionDataset(Dataset):
     def processed_file_names(self):
         """If these files are found in raw_dir, processing is skipped"""
         self.data = pd.read_csv(
-            self.raw_paths[0], sep="\t", index_col="PID"
-        ).reset_index()
+            self.raw_paths[0], sep="\t"
+        )
 
         return [f"data_{self.prefix}_{i}.pt" for i in list(self.data.index)]
 
@@ -138,9 +138,27 @@ class DepressionDataset(Dataset):
         label = self.label_to_class[label]
         label = np.asarray([label])
         return torch.tensor(label, dtype=torch.int64)
+    
+    def get_targets(self):
+        """
+        Returns the tragets of the dataset
+        """
+
+        if self.data is None:
+            self.data = pd.read_csv(
+                self.raw_paths[0], sep="\t"
+            )
+
+        labels = self.data["Label"].values
+        targets = np.array([self.label_to_class[label] for label in labels])
+        return targets
 
     def len(self):
-        return self.data.shape[0]
+        """
+        Equivalent to __len__ in pytorch
+        Is not needed for PyG's InMemoryDataset
+        """
+        return len(self.data)
 
     def get(self, idx):
         """

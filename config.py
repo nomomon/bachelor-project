@@ -19,6 +19,8 @@ HYPERPARAMETERS = {
     "model_dense_neurons": [16, 128, 64, 256, 32]
 }
 
+# TODO: save the best hyperparameters here
+
 # Input schema
 # TODO: update the schema to match your features
 # TODO: write the explanation of the schema

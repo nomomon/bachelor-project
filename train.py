@@ -12,7 +12,7 @@ from sklearn.metrics import (
 )
 
 import mlflow.pytorch
-from utils import bcolors
+from utils import bcolors, compute_class_weight
 
 from torch_geometric.loader import DataLoader
 from dataset import DepressionDataset
@@ -27,24 +27,28 @@ def run_train_epoch(epoch):
     for _, batch in enumerate(tqdm(train_loader)):
         # Use GPU
         batch.to(device)
+        
         # Reset gradients
-
         optimizer.zero_grad()
+
         # Passing the node features and the connection info
-        pred = model(
+        logits = model(
             batch.x.float(),
             batch.edge_index,
             batch.batch
         )
 
         # Calculating the loss and gradients
-        loss = torch.sqrt(loss_fn(pred, batch.y))
+        loss = torch.sqrt(loss_fn(logits, batch.y))
         loss.backward()
+
         # Update using the gradients
         optimizer.step()
 
-        all_preds.append(np.argmax(pred.cpu().detach().numpy(), axis=1))
+        # Apply argmax to get the predicted class
+        all_preds.append(np.argmax(logits.cpu().detach().numpy(), axis=1))
         all_labels.append(batch.y.cpu().detach().numpy())
+
     all_preds = np.concatenate(all_preds).ravel()
     all_labels = np.concatenate(all_labels).ravel()
     calculate_metrics(all_preds, all_labels, epoch, 'train')
@@ -71,9 +75,13 @@ def run_test_epoch(epoch):
 
 
 def calculate_metrics(y_pred, y_true, epoch, type):
+
+    conf_mat = confusion_matrix(y_pred, y_true)
+    conf_mat = '\t'+str(conf_mat).replace('\n', '\n\t')
+
     print(f"""
     Accuracy: {accuracy_score(y_pred, y_true)}
-    Confusion matrix: \n {confusion_matrix(y_pred, y_true)}
+    Confusion matrix: \n {conf_mat}
     Micro Precision: {precision_score(y_pred, y_true, average='micro')}
     Micro Recall: {recall_score(y_pred, y_true, average='micro')}
     Micro F1 Score: {f1_score(y_pred, y_true, average='micro')}
@@ -122,15 +130,21 @@ if __name__ == "__main__":
     model = model.to(device)
     print("Number of parameters:", model.count_parameters())
 
+    # The class weights are imbalance, so we need to weight the loss function
+    weights = compute_class_weight(train_dataset.get_targets())
+    weights = torch.tensor(weights).to(device)
+    print("Class weights:", weights)
+
     # Initialize the loss function and optimizer
-    weights = torch.tensor([1.0, .25, 1.5]).to(device) # TODO: extract this ratio calculation
     loss_fn = torch.nn.CrossEntropyLoss(weight=weights)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
     
     # Run the training loop
+    N_EPOCHS = 6
+
     with mlflow.start_run() as run:
-        for epoch in range(500):
+        for epoch in range(N_EPOCHS):
             # Training
             print(bcolors.BOLD, f"Epoch {epoch} | TRAIN", bcolors.ENDC, bcolors.OKBLUE)
             model.train()
@@ -148,6 +162,7 @@ if __name__ == "__main__":
                 print(f"Test Loss {loss}", bcolors.ENDC)
                 mlflow.log_metric(key='Test loss', value=float(loss), step=epoch)
             scheduler.step()
-    print('Done.')
-
-    mlflow.pytorch.log_model(model, 'model')
+        
+        # Save the model
+        mlflow.pytorch.log_model(model, 'model')
+        print('Done.')
