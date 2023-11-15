@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/3885e0d5c622405983870afeb334062b/artifacts
+deleted_time: 1698428259732
+end_time: 1698269980958
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 3885e0d5c622405983870afeb334062b
+run_name: aged-zebra-825
+run_uuid: 3885e0d5c622405983870afeb334062b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698269973319
+status: 4
+tags: []
+user_id: nomomon

@@ -3,6 +3,4 @@
 # data files
 **.pt
 
-mlruns/**
-
 __pycache__/

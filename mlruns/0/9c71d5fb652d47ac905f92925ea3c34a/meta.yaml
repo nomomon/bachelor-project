@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/9c71d5fb652d47ac905f92925ea3c34a/artifacts
+end_time: 1700031360139
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 9c71d5fb652d47ac905f92925ea3c34a
+run_name: burly-calf-131
+run_uuid: 9c71d5fb652d47ac905f92925ea3c34a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1700031256240
+status: 4
+tags: []
+user_id: nomomon

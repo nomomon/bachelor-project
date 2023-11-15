@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/13b5b9b4e75d458b8c3f2fde3a5b8cba/artifacts
+deleted_time: 1698428259717
+end_time: 1698272505930
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 13b5b9b4e75d458b8c3f2fde3a5b8cba
+run_name: aged-hen-735
+run_uuid: 13b5b9b4e75d458b8c3f2fde3a5b8cba
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698272498400
+status: 4
+tags: []
+user_id: nomomon

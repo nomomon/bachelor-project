@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/04dc594616c047b1bef7b80d562f4f6c/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 04dc594616c047b1bef7b80d562f4f6c
+run_name: delightful-stag-487
+run_uuid: 04dc594616c047b1bef7b80d562f4f6c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1699984259404
+status: 1
+tags: []
+user_id: nomomon

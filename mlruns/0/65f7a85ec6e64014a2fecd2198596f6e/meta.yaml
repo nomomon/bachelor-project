@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/65f7a85ec6e64014a2fecd2198596f6e/artifacts
+deleted_time: 1698428259733
+end_time: 1698269278917
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 65f7a85ec6e64014a2fecd2198596f6e
+run_name: glamorous-bee-277
+run_uuid: 65f7a85ec6e64014a2fecd2198596f6e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698269266207
+status: 4
+tags: []
+user_id: nomomon

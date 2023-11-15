@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/09d54141bf7c462ca8e94df5e52bd6e0/artifacts
+deleted_time: 1698428259711
+end_time: 1698273433784
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 09d54141bf7c462ca8e94df5e52bd6e0
+run_name: traveling-fish-227
+run_uuid: 09d54141bf7c462ca8e94df5e52bd6e0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698273426012
+status: 4
+tags: []
+user_id: nomomon

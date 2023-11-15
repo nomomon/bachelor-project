@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/5addad86bf504fc69ff9f163f35ea29b/artifacts
+end_time: 1699690031840
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 5addad86bf504fc69ff9f163f35ea29b
+run_name: incongruous-grub-789
+run_uuid: 5addad86bf504fc69ff9f163f35ea29b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1699689937513
+status: 3
+tags: []
+user_id: nomomon

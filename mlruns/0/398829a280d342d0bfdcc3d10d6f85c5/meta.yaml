@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/398829a280d342d0bfdcc3d10d6f85c5/artifacts
+deleted_time: 1698428259704
+end_time: 1698273530753
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 398829a280d342d0bfdcc3d10d6f85c5
+run_name: chill-lynx-882
+run_uuid: 398829a280d342d0bfdcc3d10d6f85c5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698273523932
+status: 4
+tags: []
+user_id: nomomon

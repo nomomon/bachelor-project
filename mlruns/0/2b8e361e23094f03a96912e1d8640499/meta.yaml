@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/2b8e361e23094f03a96912e1d8640499/artifacts
+deleted_time: 1699665340019
+end_time: 1699663803054
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 2b8e361e23094f03a96912e1d8640499
+run_name: sedate-cub-567
+run_uuid: 2b8e361e23094f03a96912e1d8640499
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1699663282668
+status: 4
+tags: []
+user_id: nomomon

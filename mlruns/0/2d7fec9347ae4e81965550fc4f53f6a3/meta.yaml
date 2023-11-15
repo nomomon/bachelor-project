@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/2d7fec9347ae4e81965550fc4f53f6a3/artifacts
+deleted_time: 1699665340026
+end_time: 1698431946790
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 2d7fec9347ae4e81965550fc4f53f6a3
+run_name: unruly-shrimp-19
+run_uuid: 2d7fec9347ae4e81965550fc4f53f6a3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698428757345
+status: 4
+tags: []
+user_id: nomomon

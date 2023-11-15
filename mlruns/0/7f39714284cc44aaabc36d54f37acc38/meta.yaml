@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/7f39714284cc44aaabc36d54f37acc38/artifacts
+deleted_time: 1698428259727
+end_time: 1698270624562
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 7f39714284cc44aaabc36d54f37acc38
+run_name: resilient-toad-654
+run_uuid: 7f39714284cc44aaabc36d54f37acc38
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698270616569
+status: 4
+tags: []
+user_id: nomomon

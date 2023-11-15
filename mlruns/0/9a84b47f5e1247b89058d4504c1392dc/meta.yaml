@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/9a84b47f5e1247b89058d4504c1392dc/artifacts
+deleted_time: 1698428259690
+end_time: 1698427970095
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 9a84b47f5e1247b89058d4504c1392dc
+run_name: nimble-ram-425
+run_uuid: 9a84b47f5e1247b89058d4504c1392dc
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698427970089
+status: 4
+tags: []
+user_id: nomomon

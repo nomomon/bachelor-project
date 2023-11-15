@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/fe536b1779d94b9b80780c2d6dee8d45/artifacts
+deleted_time: 1698428259717
+end_time: 1698273263716
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: fe536b1779d94b9b80780c2d6dee8d45
+run_name: melodic-pig-743
+run_uuid: fe536b1779d94b9b80780c2d6dee8d45
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698273256196
+status: 4
+tags: []
+user_id: nomomon

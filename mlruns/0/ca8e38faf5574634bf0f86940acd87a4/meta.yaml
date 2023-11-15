@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/ca8e38faf5574634bf0f86940acd87a4/artifacts
+deleted_time: 1698428259689
+end_time: 1698427766624
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: ca8e38faf5574634bf0f86940acd87a4
+run_name: merciful-rat-22
+run_uuid: ca8e38faf5574634bf0f86940acd87a4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1698427766419
+status: 4
+tags: []
+user_id: nomomon
