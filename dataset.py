@@ -126,9 +126,19 @@ class DepressionDataset(Dataset):
         # - currently only next to each other
         # - add bigrams, trigrams, etc.
         # - add word dependency edges
+
+        # next to each other
         for i in range(len(word_list) - 1):
             edge_indices.append([i, i + 1])
             edge_indices.append([i + 1, i])
+
+
+        # fully connected graph
+        # for i in range(len(word_list) - 1):
+        #     for j in range(i + 1, len(word_list)):
+        #         edge_indices.append([i, j])
+        #         edge_indices.append([j, i])
+
 
         edge_indices = torch.tensor(edge_indices)
         edge_indices = edge_indices.t().to(torch.long).view(2, -1)

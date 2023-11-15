@@ -26,3 +26,8 @@ def compute_class_weight(train_y):
         y = train_y
     )
     return class_weight_value.tolist()
+
+
+import os
+os.system('cls' if os.name == 'nt' else 'clear')
+print(bcolors.HEADER, "Running utils.py, cleared terminal", bcolors.ENDC)
