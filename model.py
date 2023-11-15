@@ -17,19 +17,22 @@ class GNN(torch.nn.Module):
         # top_k_ratio = model_params["model_top_k_ratio"]
         dense_neurons = model_params["model_dense_neurons"]
 
-        self.conv_layers = ModuleList([])
-        self.head_layers = ModuleList([])
+        # self.conv_layers = ModuleList([])
+        # self.head_layers = ModuleList([])
         # self.pooling_layers = ModuleList([])
 
         if self.n_layers == 0:
             raise NotImplementedError("Number of layers must be greater than 0")
 
-        for i in range(self.n_layers):
-            input_size = feature_size if i == 0 else embedding_size
+        self.conv_1 = GATConv(feature_size, embedding_size, heads=n_heads, dropout=dropout_rate)
+        self.head_1 = Linear(embedding_size * n_heads, embedding_size)
+        self.conv_2 = GATConv(embedding_size, embedding_size, heads=n_heads, dropout=dropout_rate)
+        self.head_2 = Linear(embedding_size * n_heads, embedding_size)
+        self.conv_3 = GATConv(embedding_size, embedding_size, heads=n_heads, dropout=dropout_rate)
+        self.head_3 = Linear(embedding_size * n_heads, embedding_size)
 
-            self.conv_layers.append(GATConv(input_size, embedding_size, heads=n_heads, dropout=dropout_rate))
-            self.head_layers.append(Linear(embedding_size * n_heads, embedding_size))
-            # self.pooling_layers.append(TopKPooling(embedding_size, ratio=top_k_ratio))
+        self.conv_layers = [self.conv_1, self.conv_2, self.conv_3]
+        self.head_layers = [self.head_1, self.head_2, self.head_3]
 
         self.linear_1 = Linear(embedding_size * 2, dense_neurons)
         self.linear_2 = Linear(dense_neurons, dense_neurons // 2)
@@ -51,9 +54,9 @@ class GNN(torch.nn.Module):
 
         # Output block
         x = torch.relu(self.linear_1(x))
-        x = F.dropout(x, p=0.8, training=self.training) # TODO: does this dropout need to be 0.8?
+        x = F.dropout(x, p=0.1, training=self.training) # TODO: does this dropout need to be 0.1?
         x = torch.relu(self.linear_2(x))                # can we use the dropout from config?
-        x = F.dropout(x, p=0.8, training=self.training)
+        x = F.dropout(x, p=0.1, training=self.training)
         x = self.linear_3(x)
 
         return x

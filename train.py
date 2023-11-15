@@ -12,7 +12,6 @@ from sklearn.metrics import (
     accuracy_score,
     precision_score,
     recall_score
-    # roc_auc_score
 )
 import mlflow.pytorch
 from utils import bcolors, compute_class_weight
@@ -22,7 +21,7 @@ from dataset import DepressionDataset
 from model import GNN
 
 # TODO: generally speaking, what's up with this code clean this up
-#%%
+
 def log_conf_matrix(y_pred, y_true, epoch):
     # Log confusion matrix as image
     cm = confusion_matrix(y_pred, y_true)
@@ -114,7 +113,7 @@ def run_test_epoch(epoch, model, test_loader, loss_fn):
     return epoch_loss / steps_per_epoch
 
 
-# export this to utils.py
+# TODO: export this to utils.py
 def calculate_metrics(y_pred, y_true, epoch, type):
 
     conf_mat = confusion_matrix(y_pred, y_true)
@@ -126,7 +125,7 @@ def calculate_metrics(y_pred, y_true, epoch, type):
     Micro Precision: {precision_score(y_pred, y_true, average='micro')}
     Micro Recall: {recall_score(y_pred, y_true, average='micro')}
     Micro F1 Score: {f1_score(y_pred, y_true, average='micro')}
-    """, end="")
+    """, end="") 
 
     mlflow.log_metric(f"{type}_micro_f1", f1_score(y_pred, y_true, average='micro'), step=epoch)
     mlflow.log_metric(f"{type}_accuracy", accuracy_score(y_pred, y_true), step=epoch)
@@ -138,12 +137,13 @@ def calculate_metrics(y_pred, y_true, epoch, type):
 
 
 
+
 if __name__ == "__main__":
+    # Remove the processed data folder
     # os.system('rm -rf data/processed')
 
-    # Model hyperparameters
-    # TODO: find these hyperparameters
-    # TODO: add these hyperparameters to the mlflow log
+    # Model hyperparameters (see config.py for more info)
+    # TODO: find these hyperparameters with a search (mango)
     model_params = {
         "model_embedding_size": 32,
         "model_attention_heads": 4,
@@ -151,15 +151,17 @@ if __name__ == "__main__":
         "model_dropout_rate": 0.1,
         "model_top_k_ratio": 0.5,
         "model_dense_neurons": 32,
-        # "data_path": "fully_connected_graph"
     }
 
     # Load the data
     train_dataset = DepressionDataset(
-        root='data/', filename='train_oversampled.tsv', prefix="train")
+        root='data/', 
+        filename='train_oversampled.tsv', 
+        prefix="train")
     test_dataset = DepressionDataset(
-        root='data/', filename='dev.tsv', prefix="dev"
-    )
+        root='data/', 
+        filename='dev.tsv', 
+        prefix="dev")
 
     # Create the data loaders
     NUM_GRAPHS_PER_BATCH = 256

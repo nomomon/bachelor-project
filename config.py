@@ -25,7 +25,6 @@ HYPERPARAMETERS = {
 # TODO: update the schema to match your features
 # TODO: write the explanation of the schema
 input_schema = Schema([TensorSpec(np.dtype(np.float32), (-1, 30), name="x"), 
-                       TensorSpec(np.dtype(np.float32), (-1, 11), name="edge_attr"), 
                        TensorSpec(np.dtype(np.int32), (2, -1), name="edge_index"), 
                        TensorSpec(np.dtype(np.int32), (-1, 1), name="batch_index")])
 
