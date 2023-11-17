@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/ced99c99b0cb4b148d16cb9e33364a45/artifacts
+end_time: 1700097891357
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ced99c99b0cb4b148d16cb9e33364a45
+run_name: bemused-trout-944
+run_uuid: ced99c99b0cb4b148d16cb9e33364a45
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1700097890932
+status: 4
+tags: []
+user_id: nomomon

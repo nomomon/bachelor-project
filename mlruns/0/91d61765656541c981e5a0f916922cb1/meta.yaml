@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/91d61765656541c981e5a0f916922cb1/artifacts
+end_time: 1700140110333
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 91d61765656541c981e5a0f916922cb1
+run_name: nebulous-squid-635
+run_uuid: 91d61765656541c981e5a0f916922cb1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1700139535194
+status: 4
+tags: []
+user_id: nomomon

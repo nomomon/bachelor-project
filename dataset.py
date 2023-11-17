@@ -115,7 +115,7 @@ class DepressionDataset(Dataset):
         """
         pass
 
-    def _get_adjacency_info(self, word_list):
+    def _get_adjacency_info(self, word_list, window_size=5):
         """
         Simple adjacency info for now. Words are connected if they are
         next to each other in the sentence.
@@ -128,9 +128,12 @@ class DepressionDataset(Dataset):
         # - add word dependency edges
 
         # next to each other
-        for i in range(len(word_list) - 1):
-            edge_indices.append([i, i + 1])
-            edge_indices.append([i + 1, i])
+        for i in range(len(word_list)):
+            for j in range(-window_size, window_size + 1):
+                if i + j < 0 or i + j >= len(word_list):
+                    continue
+                edge_indices.append([i, i + j])
+                edge_indices.append([i + j, i])
 
 
         # fully connected graph

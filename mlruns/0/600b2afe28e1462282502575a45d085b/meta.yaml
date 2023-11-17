@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/600b2afe28e1462282502575a45d085b/artifacts
+end_time: 1700147607401
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 600b2afe28e1462282502575a45d085b
+run_name: abrasive-fly-911
+run_uuid: 600b2afe28e1462282502575a45d085b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1700144330416
+status: 4
+tags: []
+user_id: nomomon

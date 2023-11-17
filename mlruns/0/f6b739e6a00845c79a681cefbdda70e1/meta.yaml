@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/f6b739e6a00845c79a681cefbdda70e1/artifacts
+end_time: 1700104412812
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f6b739e6a00845c79a681cefbdda70e1
+run_name: powerful-asp-904
+run_uuid: f6b739e6a00845c79a681cefbdda70e1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1700099843008
+status: 4
+tags: []
+user_id: nomomon

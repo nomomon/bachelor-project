@@ -18,6 +18,7 @@ from utils import bcolors, compute_class_weight
 
 from torch_geometric.loader import DataLoader
 from dataset import DepressionDataset
+from base_model import GCN
 from model import GNN
 
 # TODO: generally speaking, what's up with this code clean this up
@@ -122,18 +123,18 @@ def calculate_metrics(y_pred, y_true, epoch, type):
     print(f"""
     Accuracy: {accuracy_score(y_pred, y_true)}
     Confusion matrix: \n {conf_mat}
-    Micro Precision: {precision_score(y_pred, y_true, average='micro')}
-    Micro Recall: {recall_score(y_pred, y_true, average='micro')}
-    Micro F1 Score: {f1_score(y_pred, y_true, average='micro')}
+    macro Precision: {precision_score(y_pred, y_true, average='macro')}
+    macro Recall: {recall_score(y_pred, y_true, average='macro')}
+    macro F1 Score: {f1_score(y_pred, y_true, average='macro')}
     """, end="") 
 
-    mlflow.log_metric(f"{type}_micro_f1", f1_score(y_pred, y_true, average='micro'), step=epoch)
+    mlflow.log_metric(f"{type}_macro_f1", f1_score(y_pred, y_true, average='macro'), step=epoch)
     mlflow.log_metric(f"{type}_accuracy", accuracy_score(y_pred, y_true), step=epoch)
-    mlflow.log_metric(f"{type}_micro_precision", precision_score(y_pred, y_true, average='micro'), step=epoch)
-    mlflow.log_metric(f"{type}_micro_recall", recall_score(y_pred, y_true, average='micro'), step=epoch)
+    mlflow.log_metric(f"{type}_macro_precision", precision_score(y_pred, y_true, average='macro'), step=epoch)
+    mlflow.log_metric(f"{type}_macro_recall", recall_score(y_pred, y_true, average='macro'), step=epoch)
 
     # TODO: add the confusion matrix to the mlflow log
-    # TODO: check with the paper if they used micro or macro
+    # TODO: check with the paper if they used macro or micro
 
 
 
@@ -145,12 +146,12 @@ if __name__ == "__main__":
     # Model hyperparameters (see config.py for more info)
     # TODO: find these hyperparameters with a search (mango)
     model_params = {
-        "model_embedding_size": 32,
-        "model_attention_heads": 4,
+        "model_embedding_size": 64,
+        # "model_attention_heads": 8,
         "model_layers": 3,
-        "model_dropout_rate": 0.1,
+        # "model_dropout_rate": 0.1,
         "model_top_k_ratio": 0.5,
-        "model_dense_neurons": 32,
+        "model_dense_neurons": 64,
     }
 
     # Load the data
@@ -164,7 +165,7 @@ if __name__ == "__main__":
         prefix="dev")
 
     # Create the data loaders
-    NUM_GRAPHS_PER_BATCH = 256
+    NUM_GRAPHS_PER_BATCH = 32
     train_loader = DataLoader(train_dataset, batch_size=NUM_GRAPHS_PER_BATCH, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=NUM_GRAPHS_PER_BATCH, shuffle=True)
 
@@ -172,28 +173,27 @@ if __name__ == "__main__":
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     # Initialize the model
-    model = GNN(
+    model = GCN(
         feature_size=train_dataset[0].x.shape[1],
         num_classes=3,
         model_params=model_params
     )
     model = model.to(device)
-    print("Number of parameters:", model.count_parameters())
+    # print("Number of parameters:", model.count_parameters())
     print("Model summary:")
     print(summary(
         model, train_dataset[0].x, 
         train_dataset[0].edge_index, 
-        batch_index=train_dataset[0].batch,
-        max_depth=1))
+        batch_index=train_dataset[0].batch))
 
     # The class weights are imbalance, so we need to weight the loss function
-    weights = compute_class_weight(train_dataset.get_targets())
-    weights = torch.tensor(weights).to(device)
-    print("Class weights:", weights)
+    # weights = compute_class_weight(train_dataset.get_targets())
+    # weights = torch.tensor(weights).to(device)
+    # print("Class weights:", weights)
 
     # Initialize the loss function and optimizer
-    loss_fn = torch.nn.CrossEntropyLoss(weight=weights)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.8, weight_decay=5e-4)
+    loss_fn = torch.nn.NLLLoss() # (weight=weights)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.8, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
     
     # Run the training loop

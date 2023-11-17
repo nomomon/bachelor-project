@@ -14,7 +14,7 @@ class GNN(torch.nn.Module):
         n_heads = model_params["model_attention_heads"]
         self.n_layers = model_params["model_layers"]
         dropout_rate = model_params["model_dropout_rate"]
-        # top_k_ratio = model_params["model_top_k_ratio"]
+        top_k_ratio = model_params["model_top_k_ratio"]
         dense_neurons = model_params["model_dense_neurons"]
 
         # self.conv_layers = ModuleList([])
@@ -26,13 +26,17 @@ class GNN(torch.nn.Module):
 
         self.conv_1 = GATConv(feature_size, embedding_size, heads=n_heads, dropout=dropout_rate)
         self.head_1 = Linear(embedding_size * n_heads, embedding_size)
+        self.pooling_1 = TopKPooling(embedding_size, ratio=top_k_ratio)
         self.conv_2 = GATConv(embedding_size, embedding_size, heads=n_heads, dropout=dropout_rate)
         self.head_2 = Linear(embedding_size * n_heads, embedding_size)
+        self.pooling_2 = TopKPooling(embedding_size, ratio=top_k_ratio)
         self.conv_3 = GATConv(embedding_size, embedding_size, heads=n_heads, dropout=dropout_rate)
         self.head_3 = Linear(embedding_size * n_heads, embedding_size)
+        self.pooling_3 = TopKPooling(embedding_size, ratio=top_k_ratio)
 
         self.conv_layers = [self.conv_1, self.conv_2, self.conv_3]
         self.head_layers = [self.head_1, self.head_2, self.head_3]
+        self.pooling_layers = [self.pooling_1, self.pooling_2, self.pooling_3]
 
         self.linear_1 = Linear(embedding_size * 2, dense_neurons)
         self.linear_2 = Linear(dense_neurons, dense_neurons // 2)
@@ -44,9 +48,9 @@ class GNN(torch.nn.Module):
         for i in range(self.n_layers):
             x = self.conv_layers[i](x, edge_index)
             x = self.head_layers[i](x)
-            # x, edge_index, _, batch_index, _, _ = self.pooling_layers[i](
-            #     x, edge_index, None, batch_index
-            # )
+            x, edge_index, _, batch_index, _, _ = self.pooling_layers[i](
+                x, edge_index, None, batch_index
+            )
 
             global_representation.append(torch.cat([gmp(x, batch_index), gap(x, batch_index)], dim=1))
         
@@ -59,7 +63,7 @@ class GNN(torch.nn.Module):
         x = F.dropout(x, p=0.1, training=self.training)
         x = self.linear_3(x)
 
-        return x
+        return F.log_softmax(x, dim=1)
     
     def count_parameters(self):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
