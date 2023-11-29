@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/a93fa8ae47054ef79229db2394773bab/artifacts
+deleted_time: 1701300467411
+end_time: 1701300384149
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: a93fa8ae47054ef79229db2394773bab
+run_name: bittersweet-mule-405
+run_uuid: a93fa8ae47054ef79229db2394773bab
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701300035181
+status: 4
+tags: []
+user_id: nomomon

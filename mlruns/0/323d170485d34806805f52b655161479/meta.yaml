@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/323d170485d34806805f52b655161479/artifacts
+end_time: 1701301686204
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 323d170485d34806805f52b655161479
+run_name: nervous-stork-301
+run_uuid: 323d170485d34806805f52b655161479
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701301212893
+status: 3
+tags: []
+user_id: nomomon
