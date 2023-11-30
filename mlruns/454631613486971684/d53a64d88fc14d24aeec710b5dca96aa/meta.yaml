@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/d53a64d88fc14d24aeec710b5dca96aa/artifacts
+end_time: 1701376274716
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: d53a64d88fc14d24aeec710b5dca96aa
+run_name: sassy-gnu-699
+run_uuid: d53a64d88fc14d24aeec710b5dca96aa
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701375838655
+status: 3
+tags: []
+user_id: nomomon

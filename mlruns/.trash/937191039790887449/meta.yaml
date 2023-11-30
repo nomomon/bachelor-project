@@ -1,0 +1,7 @@
+artifact_location: mlflow-artifacts:/937191039790887449
+creation_time: 1701369827626
+experiment_id: '937191039790887449'
+last_update_time: 1701369866602
+lifecycle_stage: deleted
+name: With dropout
+tags: {}

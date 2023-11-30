@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/057ca0d1c49240e1bafc0ecb78900e4d/artifacts
+end_time: 1701382737038
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: 057ca0d1c49240e1bafc0ecb78900e4d
+run_name: popular-gull-82
+run_uuid: 057ca0d1c49240e1bafc0ecb78900e4d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701382082025
+status: 3
+tags: []
+user_id: nomomon

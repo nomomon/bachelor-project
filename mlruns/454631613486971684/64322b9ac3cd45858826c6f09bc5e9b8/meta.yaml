@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/64322b9ac3cd45858826c6f09bc5e9b8/artifacts
+end_time: 1701374346251
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: 64322b9ac3cd45858826c6f09bc5e9b8
+run_name: nervous-shrike-817
+run_uuid: 64322b9ac3cd45858826c6f09bc5e9b8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701373764102
+status: 3
+tags: []
+user_id: nomomon

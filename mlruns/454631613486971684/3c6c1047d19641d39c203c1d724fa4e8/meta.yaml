@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/3c6c1047d19641d39c203c1d724fa4e8/artifacts
+end_time: 1701370942350
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: 3c6c1047d19641d39c203c1d724fa4e8
+run_name: brawny-colt-829
+run_uuid: 3c6c1047d19641d39c203c1d724fa4e8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701369892851
+status: 3
+tags: []
+user_id: nomomon

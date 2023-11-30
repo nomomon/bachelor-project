@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/6d659497e4d14b3492e150004c6ae80a/artifacts
+end_time: 1701371437092
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: 6d659497e4d14b3492e150004c6ae80a
+run_name: gentle-jay-98
+run_uuid: 6d659497e4d14b3492e150004c6ae80a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701370942356
+status: 3
+tags: []
+user_id: nomomon

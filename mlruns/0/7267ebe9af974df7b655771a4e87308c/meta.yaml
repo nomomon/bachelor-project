@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/7267ebe9af974df7b655771a4e87308c/artifacts
+end_time: 1701337596808
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 7267ebe9af974df7b655771a4e87308c
+run_name: serious-rook-486
+run_uuid: 7267ebe9af974df7b655771a4e87308c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701336868475
+status: 3
+tags: []
+user_id: nomomon

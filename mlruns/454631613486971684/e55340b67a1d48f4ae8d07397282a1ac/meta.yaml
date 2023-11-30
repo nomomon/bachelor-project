@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/e55340b67a1d48f4ae8d07397282a1ac/artifacts
+end_time: 1701378026773
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: e55340b67a1d48f4ae8d07397282a1ac
+run_name: bedecked-eel-810
+run_uuid: e55340b67a1d48f4ae8d07397282a1ac
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701377440182
+status: 3
+tags: []
+user_id: nomomon

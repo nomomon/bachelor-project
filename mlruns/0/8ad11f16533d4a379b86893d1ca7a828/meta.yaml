@@ -1,5 +1,5 @@
 artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/8ad11f16533d4a379b86893d1ca7a828/artifacts
-end_time: null
+end_time: 1701335787140
 entry_point_name: ''
 experiment_id: '0'
 lifecycle_stage: active
@@ -10,6 +10,6 @@ source_name: ''
 source_type: 4
 source_version: ''
 start_time: 1701334658600
-status: 1
+status: 3
 tags: []
 user_id: nomomon
