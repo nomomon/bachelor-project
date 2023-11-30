@@ -13,6 +13,6 @@ flavors:
     model_data: data
     pytorch_version: 2.1.0
 mlflow_version: 2.7.1
-model_uuid: b5828786f66545b9b574fdd9a337a117
+model_uuid: f91e08f5f33e4c9b9feeaf952567cfda
 run_id: 9d9c760bd2204d67b05e02fb2f4c7962
-utc_time_created: '2023-11-29 23:56:28.374887'
+utc_time_created: '2023-11-30 00:07:07.778995'

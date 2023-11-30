@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/4e9d191c9e8b418ca3e9c3af9b9c371b/artifacts
+end_time: 1701322690572
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4e9d191c9e8b418ca3e9c3af9b9c371b
+run_name: auspicious-crow-327
+run_uuid: 4e9d191c9e8b418ca3e9c3af9b9c371b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701320589126
+status: 3
+tags: []
+user_id: nomomon

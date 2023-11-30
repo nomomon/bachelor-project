@@ -1,8 +1,9 @@
 artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/9d9c760bd2204d67b05e02fb2f4c7962/artifacts
-end_time: null
+deleted_time: 1701334164023
+end_time: 1701302895536
 entry_point_name: ''
 experiment_id: '0'
-lifecycle_stage: active
+lifecycle_stage: deleted
 run_id: 9d9c760bd2204d67b05e02fb2f4c7962
 run_name: popular-cat-481
 run_uuid: 9d9c760bd2204d67b05e02fb2f4c7962
@@ -10,6 +11,6 @@ source_name: ''
 source_type: 4
 source_version: ''
 start_time: 1701301807738
-status: 1
+status: 4
 tags: []
 user_id: nomomon

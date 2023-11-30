@@ -35,6 +35,7 @@ def log_conf_matrix(y_pred, y_true, epoch, step_type):
     cfm_plot = sns.heatmap(df_cfm, annot=True, cmap='Blues', fmt='g')
     image_path = f'data/images/cm_{epoch:04d}_{step_type}.png'
     cfm_plot.figure.savefig(image_path)
+    plt.close()
     
     # Log confusion matrix image as an artifact
     mlflow.log_artifact(image_path)
@@ -61,7 +62,7 @@ def step(epoch, model, data_loader, optimizer, loss_fn, device, step_type="train
     total_loss = 0
     total_steps = len(data_loader)
 
-    for batch in tqdm(data_loader, total=total_steps):
+    for batch in data_loader:
         optimizer.zero_grad()
         batch.to(device)
         
@@ -118,7 +119,8 @@ def train(params, train_dataset, valid_dataset, model_class):
 
         best_valid_loss = 1e6
         early_stopping_counter = 0
-        for epoch in range(params["n_epochs"]):
+        epoch_iter = tqdm(range(params["n_epochs"]))
+        for epoch in epoch_iter:
             model.train()
 
             train_loss = step(epoch, model, train_loader, optimizer, loss_fn, device)
@@ -129,18 +131,24 @@ def train(params, train_dataset, valid_dataset, model_class):
                 valid_loss = step(epoch, model, valid_loader, optimizer, loss_fn, device, step_type="valid")
                 mlflow.log_metric("valid_loss", valid_loss, step=epoch)
 
-                if best_valid_loss > valid_loss:
+                if best_valid_loss - valid_loss > 1e-4:
                     best_valid_loss = valid_loss
                     mlflow.pytorch.log_model(model, 'model')
                     early_stopping_counter = 0
                 else:
                     early_stopping_counter += 1
+                
+            
             scheduler.step()
 
+            epoch_iter.set_description(f"TL: {train_loss:.4f} | VL: {valid_loss:.4f} | EaStp: {early_stopping_counter}/10")
+            
             if early_stopping_counter >= 10:
                 print("Early stopping due to no improvement.")
                 break
-    return [best_valid_loss]
+            
+
+        return best_valid_loss
         
         
 

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/057e07b4578f404d8f47c91608531834/artifacts
+end_time: 1701307655517
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 057e07b4578f404d8f47c91608531834
+run_name: smiling-bug-710
+run_uuid: 057e07b4578f404d8f47c91608531834
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701305586341
+status: 3
+tags: []
+user_id: nomomon

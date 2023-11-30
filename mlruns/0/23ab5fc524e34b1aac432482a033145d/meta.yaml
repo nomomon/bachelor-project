@@ -1,0 +1,16 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/0/23ab5fc524e34b1aac432482a033145d/artifacts
+deleted_time: 1701334164023
+end_time: 1701333647638
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 23ab5fc524e34b1aac432482a033145d
+run_name: dapper-bat-363
+run_uuid: 23ab5fc524e34b1aac432482a033145d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701333645622
+status: 4
+tags: []
+user_id: nomomon
