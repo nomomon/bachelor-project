@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/9cbfebe57be04cde812b23980db1440e/artifacts
+end_time: 1701397861135
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: 9cbfebe57be04cde812b23980db1440e
+run_name: shivering-wasp-950
+run_uuid: 9cbfebe57be04cde812b23980db1440e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701396117972
+status: 3
+tags: []
+user_id: nomomon

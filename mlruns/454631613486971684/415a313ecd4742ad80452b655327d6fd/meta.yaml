@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/415a313ecd4742ad80452b655327d6fd/artifacts
+end_time: 1701408005065
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: 415a313ecd4742ad80452b655327d6fd
+run_name: big-mole-139
+run_uuid: 415a313ecd4742ad80452b655327d6fd
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701407707774
+status: 4
+tags: []
+user_id: nomomon

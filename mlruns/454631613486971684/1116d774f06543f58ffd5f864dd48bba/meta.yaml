@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/nomomon/Desktop/research%20paper/project/mlruns/454631613486971684/1116d774f06543f58ffd5f864dd48bba/artifacts
+end_time: 1701407277460
+entry_point_name: ''
+experiment_id: '454631613486971684'
+lifecycle_stage: active
+run_id: 1116d774f06543f58ffd5f864dd48bba
+run_name: colorful-koi-693
+run_uuid: 1116d774f06543f58ffd5f864dd48bba
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701403531976
+status: 3
+tags: []
+user_id: nomomon
