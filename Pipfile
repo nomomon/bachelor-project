@@ -11,6 +11,10 @@ pandas = "*"
 matplotlib = "*"
 arm-mango = "*"
 mlflow = "*"
+nltk = "*"
+gensim = "*"
+spacy = "*"
+transformers = "*"
 
 [dev-packages]
 
