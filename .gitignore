@@ -1,8 +1,5 @@
 **/.DS_Store
 
-# data files
-**.pt
-
 __pycache__/
 
-data/images/
+data/gold/

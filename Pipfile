@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+torch = "*"
+torch-geometric = "*"
+numpy = "*"
+pandas = "*"
+matplotlib = "*"
+arm-mango = "*"
+mlflow = "*"
+nltk = "*"
+gensim = "*"
+spacy = "*"
+transformers = "*"
+jupyter = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
