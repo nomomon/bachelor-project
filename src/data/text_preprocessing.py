@@ -132,7 +132,22 @@ def remove_contractions(text):
         "won't": "would not",
         'dis': 'this',
         'bak': 'back',
-        'brng': 'bring'
+        'brng': 'bring',
+        "'s ": " is ",
+        "'r ": " are ",
+        "'ve ": " have ",
+        "thats": "that is",
+        "wont": "will not",
+        "cant": "can not",
+        "cannot": "can not",
+        "youre": "you are",
+        "loveu": "love you",
+        "im": "i am",
+        "ill": "i will",
+        "cuz": "because",
+        "wanna": "want to",
+        "gonna": "going to",
+        "gotta": "got to",
     }
 
     # Replace contractions

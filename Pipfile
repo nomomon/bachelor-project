@@ -15,6 +15,7 @@ nltk = "*"
 gensim = "*"
 spacy = "*"
 transformers = "*"
+jupyter = "*"
 
 [dev-packages]
 

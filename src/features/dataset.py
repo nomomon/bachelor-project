@@ -73,7 +73,7 @@ class MyOwnDataset(Dataset):
             data = Data(
                 x=node_features,
                 edge_index=edges,
-                y=self._label_to_class(label)
+                y=self._label_to_tensor(label)
             )
 
             torch.save(data, osp.join(self.processed_dir, f'data_{idx}.pt'))
@@ -82,13 +82,15 @@ class MyOwnDataset(Dataset):
         return len(self.processed_file_names)
 
     def get(self, idx):
-        data = torch.load(osp.join(self.processed_dir, f'data_{idx}.pt'))
+        filename = f'data_{self.set_type}_pid_{idx + 1}.pt'
+        data = torch.load(osp.join(self.processed_dir, filename))
         return data
     
-    def _label_to_class(self, label):
+    def _label_to_tensor(self, label):
         label_to_class = {"not depression": 0, "moderate": 1, "severe": 2}
-
-        return label_to_class[label]
+        label = label_to_class[label]
+        label = np.asarray([label])
+        return torch.tensor(label, dtype=torch.int64)
     
     def _get_graph(self, text):
         if self.graph_type == 'window':
@@ -98,7 +100,8 @@ class MyOwnDataset(Dataset):
         else:
             raise ValueError(f'Invalid graph type: {self.graph_type}')
         
-        edges = torch.tensor(edges).t().contiguous()
+        edges = torch.tensor(edges)
+        edges = edges.t().to(torch.long).view(2, -1)
         
         return nodes, edges
     
