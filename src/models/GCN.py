@@ -13,14 +13,16 @@ class GCN(torch.nn.Module):
         dense_neurons = model_params["model_dense_neurons"]
         embedding_size = model_params["model_embedding_size"]
         num_classes = model_params["model_num_classes"]
-        # dropout = model_params["model_dropout"]
+        dropout = model_params["model_dropout"]
         
         self.conv_layers = torch.nn.ModuleList()
         self.pooling_layers = torch.nn.ModuleList()
+        self.dropout_layers = torch.nn.ModuleList()
         for i in range(self.n_layers):
             input_size = feature_size if i == 0 else embedding_size
             self.conv_layers.append(GCNConv(input_size, embedding_size))
             self.pooling_layers.append(TopKPooling(embedding_size, ratio=0.2))
+            self.dropout_layers.append(torch.nn.Dropout(dropout))
 
         self.line_1 = Linear(embedding_size * 2, dense_neurons)
         self.line_2 = Linear(dense_neurons, dense_neurons // 2)
@@ -32,6 +34,7 @@ class GCN(torch.nn.Module):
         for i in range(self.n_layers):
             x = self.conv_layers[i](x, edge_index)
             x = F.relu(x)
+            x = self.dropout_layers[i](x)
 
             x, edge_index, _, batch_index, _, _ = self.pooling_layers[i](
                 x, edge_index, None, batch_index
