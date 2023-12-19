@@ -16,6 +16,7 @@ gensim = "*"
 spacy = "*"
 transformers = "*"
 jupyter = "*"
+seaborn = "*"
 
 [dev-packages]
 
