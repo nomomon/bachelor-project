@@ -5,18 +5,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from torch.utils.data import WeightedRandomSampler
-from torch_geometric.loader import DataLoader
+from torch_geometric.loader import DataLoader, ImbalancedSampler
 
 from sklearn.metrics import (
     f1_score,
     accuracy_score,
     confusion_matrix
 )
-from src.data.utils import read_tsv
 
 from src.features.dataset import DepressionDataset
-from src.models.GCN import GCN
+from src.models.GAT import GAT
 
 
 batch_size = 128
@@ -32,23 +30,9 @@ if __name__ == '__main__':
         train_set.process()
         valid_set.process()
 
-    # Get class weights
-    print("Getting class weights...", end=' ')
-    label_to_class = {"not depression": 0, "moderate": 1, "severe": 2}
-    labels = read_tsv('data/silver/train.tsv')["label"].apply(lambda x: label_to_class[x]).values
-    class_weights = 1 - np.bincount(labels) / len(labels)
-    class_weights = class_weights / class_weights.sum()
-    print(class_weights)
-    sample_weights = class_weights[labels]
-    sample_weights = torch.FloatTensor(sample_weights).to(device)
-
     # Get sampler
     print("Getting sampler...")
-    sampler = WeightedRandomSampler(
-        weights=sample_weights,
-        num_samples=len(sample_weights),
-        replacement=True
-    )
+    sampler = ImbalancedSampler(train_set, num_samples=len(train_set) // 10)
 
     # Get loaders
     print("Getting loaders...")
@@ -57,13 +41,14 @@ if __name__ == '__main__':
 
     # Get model
     print("Getting model...")
-    model = GCN(
+    model = GAT(
         feature_size=train_set[0].x.shape[1], # 300 or 768
         model_params={
             "model_layers": 3,
-            "model_dense_neurons": 100,
-            "model_embedding_size": 64,
+            "model_dense_neurons": 64,
+            "model_embedding_size": 128,
             "model_num_classes": 3,
+            "model_dropout": 0.5
         }
     ).to(device)
 
@@ -111,7 +96,11 @@ if __name__ == '__main__':
             step_loss += loss.item()
             step_acc += acc
             step_f1 += f1
-            step_cm = confusion_matrix(batch.y.cpu(), pred.cpu()) if step_cm is None else step_cm + confusion_matrix(batch.y.cpu(), pred.cpu())
+            batch_cm = confusion_matrix(batch.y.cpu(), pred.cpu())
+            if step_cm is None:
+                step_cm = batch_cm
+            else:
+                step_cm += batch_cm
 
         step_loss /= len(train_loader)
         step_acc /= len(train_loader)
@@ -142,12 +131,16 @@ if __name__ == '__main__':
 
                     pred = out.argmax(dim=1)
                     acc = accuracy_score(batch.y.cpu(), pred.cpu())
-                    f1 = f1_score(batch.y.cpu(), pred.cpu(), average='weighted')
+                    f1 = f1_score(batch.y.cpu(), pred.cpu(), average='macro')
 
                     step_loss += loss.item()
                     step_acc += acc
                     step_f1 += f1
-                    step_cm = confusion_matrix(batch.y.cpu(), pred.cpu()) if step_cm is None else step_cm + confusion_matrix(batch.y.cpu(), pred.cpu())
+                    batch_cm = confusion_matrix(batch.y.cpu(), pred.cpu())
+                    if step_cm is None:
+                        step_cm = batch_cm
+                    else:
+                        step_cm += batch_cm
 
             step_loss /= len(valid_loader)
             step_acc /= len(valid_loader)
