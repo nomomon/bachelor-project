@@ -13,6 +13,8 @@ from src.features.graphs import pipe_get_graph_dependency
 # splits = ['development']
 splits = ['train', 'valid', 'test']
 
+label_to_class = {"not depression": 0, "moderate": 1, "severe": 2}
+
 if __name__ == '__main__':
     assert os.path.exists('data/bronze/')
 
@@ -54,6 +56,7 @@ if __name__ == '__main__':
     for split in splits:
         all_nodes = pickle.load(open(f'data/gold/{split}/raw/all_nodes.pkl', 'rb'))
         all_edges = pickle.load(open(f'data/gold/{split}/raw/all_edges.pkl', 'rb'))
+        all_labels = read_tsv(f'data/silver/{split}.tsv')['label'].values
 
         # Split into subdirectories
         for i in tqdm(range(len(all_nodes)), desc=f'{split:5} | Subdirectories'):
@@ -62,6 +65,10 @@ if __name__ == '__main__':
                 pickle.dump(all_nodes[i], f)
             with open(f'data/gold/{split}/raw/{i}/edges.pkl', 'wb') as f:
                 pickle.dump(all_edges[i], f)
+            with open(f'data/gold/{split}/raw/{i}/label.pkl', 'wb') as f:
+                label = all_labels[i]
+                label = label_to_class[label]
+                pickle.dump(label, f)
 
 
     # Get Word2Vec embeddings

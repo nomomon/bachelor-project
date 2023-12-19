@@ -2,6 +2,7 @@ import mlflow
 import torch
 from tqdm import tqdm
 import numpy as np
+import matplotlib.pyplot as plt
 
 from torch.utils.data import WeightedRandomSampler
 from torch_geometric.loader import DataLoader
@@ -12,138 +13,164 @@ from sklearn.metrics import (
     precision_score,
     recall_score
 )
-from src.data.text_preprocessing import preprocess_text
+from src.data.utils import read_tsv
 
-
-from src.features.dataset import MyOwnDataset
+from src.features.dataset import DepressionDataset
 from src.models.GCN import GCN
 
 
-def log_metrics(y_pred, y_true, epoch, metric_type):
-    # Calculate metrics
-    accuracy = accuracy_score(y_true, y_pred)
-    macro_f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
-    macro_precision = precision_score(y_true, y_pred, average='macro', zero_division=0)
-    macro_recall = recall_score(y_true, y_pred, average='macro', zero_division=0)
+batch_size = 128
+reset_dataset = False
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # Log metrics
-    metrics = {
-        f"{metric_type}_accuracy": accuracy,
-        f"{metric_type}_macro_f1": macro_f1,
-        f"{metric_type}_macro_precision": macro_precision,
-        f"{metric_type}_macro_recall": macro_recall
+if __name__ == '__main__':
+
+    train_set = DepressionDataset('train', 'bert', 'dependency')
+    valid_set = DepressionDataset('valid', 'bert', 'dependency')
+
+    if reset_dataset:
+        train_set.process()
+        valid_set.process()
+
+    # # Get class weights
+    # print("Getting class weights...", end=' ')
+    # label_to_class = {"not depression": 0, "moderate": 1, "severe": 2}
+    # labels = read_tsv('data/silver/train.tsv')["label"].apply(lambda x: label_to_class[x]).values
+    # class_weights = 1 / np.bincount(labels)
+    # class_weights = class_weights / class_weights.sum()
+    # class_weights = torch.FloatTensor(class_weights).to(device)
+    # print(class_weights)
+
+    # # Get sampler
+    # print("Getting sampler...")
+    # sampler = WeightedRandomSampler(
+    #     weights=class_weights,
+    #     num_samples=len(class_weights),
+    #     replacement=True
+    # )
+
+    # Get loaders
+    print("Getting loaders...")
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True) # sampler=sampler)
+    valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False)
+
+    # Get model
+    print("Getting model...")
+    model = GCN(
+        feature_size=train_set[0].x.shape[1], # 300 or 768
+        model_params={
+            "model_layers": 3,
+            "model_dense_neurons": 32,
+            "model_embedding_size": 32,
+            "model_num_classes": 3,
+        }
+    ).to(device)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    criterion = torch.nn.CrossEntropyLoss()
+
+    hist = {
+        'train_loss': [],
+        'train_acc': [],
+        'train_f1': [],
+        'valid_loss': [],
+        'valid_acc': [],
+        'valid_f1': [],
+        'valid_x': [],
     }
-    mlflow.log_metrics(metrics, step=epoch)
 
-def step(epoch, model, data_loader, optimizer, loss_fn, device, step_type="train"):
-    all_preds = []
-    all_labels = []
-    total_loss = 0
-    total_steps = len(data_loader)
+    for epoch in range(0, 100):
+        step_loss = 0
+        step_acc = 0
+        step_f1 = 0
+        
+        model.train()
+        for batch in tqdm(train_loader, desc=f'Epoch {epoch:3d} | Train'):
+            batch = batch.to(device)
+            optimizer.zero_grad()
 
-    for batch in tqdm(data_loader, desc=f"{step_type.capitalize()}ing epoch {epoch}"):
-        optimizer.zero_grad()
-        batch.to(device)
-
-        logits = model(
-            batch.x.float(),    # node features
-            batch.edge_index,   # adj list
-            batch.batch         # batch info    
-        )
-        loss = loss_fn(logits, batch.y)
-
-        if step_type == "train":
+            out = model(
+                batch.x,
+                batch.edge_index,
+                batch.batch
+            )
+            loss = criterion(out, batch.y)
             loss.backward()
             optimizer.step()
 
-        total_loss += loss.item()
+            pred = out.argmax(dim=1)
+            acc = accuracy_score(batch.y.cpu(), pred.cpu())
+            f1 = f1_score(batch.y.cpu(), pred.cpu(), average='weighted')
 
-        # Apply argmax to get the predicted class
-        logits_np = logits.cpu().detach().numpy()
-        labels_np = batch.y.cpu().detach().numpy()
-        all_preds.append(np.argmax(logits_np, axis=1))
-        all_labels.append(labels_np)
+            step_loss += loss.item()
+            step_acc += acc
+            step_f1 += f1
 
-    all_preds = np.concatenate(all_preds).ravel()
-    all_labels = np.concatenate(all_labels).ravel()
+        step_loss /= len(train_loader)
+        step_acc /= len(train_loader)
+        step_f1 /= len(train_loader)
 
-    log_metrics(all_preds, all_labels, epoch, step_type)
+        hist['train_loss'].append(step_loss)
+        hist['train_acc'].append(step_acc)
+        hist['train_f1'].append(step_f1)
 
-    return total_loss / total_steps
-
-
-if __name__ == '__main__':
-    params = {
-        "batch_size": 32,
-        "n_epochs": 100,
-        "learning_rate": 0.01,
-        "sgd_momentum": 0.9,
-        "weight_decay": 1e-4,
-        "scheduler_gamma": 0.95,
-        "model_layers": 1,
-        "model_dense_neurons": 8,
-        "model_embedding_size": 32,
-        "model_num_classes": 3,
-        "model_dropout": 0.05,
-    }
-
-    train_dataset = MyOwnDataset('train', 'w2v', 'window', pre_transform=preprocess_text)
-    valid_dataset = MyOwnDataset('valid', 'w2v', 'window', pre_transform=preprocess_text)
-
-    samples_weight = torch.from_numpy(np.array([.4, .15, .45]))
-    samples_weigth = samples_weight.double()
-    sampler = WeightedRandomSampler(samples_weight, len(samples_weight))
-
-    train_loader = DataLoader(train_dataset, batch_size=params["batch_size"], sampler=sampler)
-    valid_loader = DataLoader(valid_dataset, batch_size=params["batch_size"])
-
-    print("Num. mini-batches in train loader:", len(train_loader))
-    print("Num. mini-batches in valid loader:", len(valid_loader))
-    
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    model_params = {k: v for k, v in params.items() if k.startswith("model_")}
-    model = GCN(
-        feature_size=train_dataset[0].x.shape[1], 
-        model_params=model_params)
-    model.to(device)
-
-    loss_fn = torch.nn.NLLLoss()
-    optimizer = torch.optim.SGD(model.parameters(), 
-                                lr=params["learning_rate"],
-                                momentum=params["sgd_momentum"],
-                                weight_decay=params["weight_decay"])
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, 
-                                                        gamma=params["scheduler_gamma"])
-
-    best_valid_loss = 1e6
-    early_stopping_counter = 0
-    epoch_iter = tqdm(range(params["n_epochs"]))
-    for epoch in epoch_iter:
-        model.train()
-
-        train_loss = step(epoch, model, train_loader, optimizer, loss_fn, device)
-        mlflow.log_metric("train_loss", train_loss, step=epoch)
 
         if epoch % 5 == 0:
+            step_loss = 0
+            step_acc = 0
+            step_f1 = 0
+
             model.eval()
-            valid_loss = step(epoch, model, valid_loader, optimizer, loss_fn, device, step_type="valid")
-            mlflow.log_metric("valid_loss", valid_loss, step=epoch)
+            with torch.no_grad():
+                for batch in tqdm(valid_loader, desc=f'Epoch {epoch:3d} | Valid'):
+                    batch = batch.to(device)
+                    out = model(
+                        batch.x,
+                        batch.edge_index,
+                        batch.batch
+                    )
+                    loss = criterion(out, batch.y)
 
-            if best_valid_loss - valid_loss > 1e-4:
-                best_valid_loss = valid_loss
-                mlflow.pytorch.log_model(model, 'model')
-                early_stopping_counter = 0
-            else:
-                early_stopping_counter += 1
-            
-        
-        scheduler.step()
+                    pred = out.argmax(dim=1)
+                    acc = accuracy_score(batch.y.cpu(), pred.cpu())
+                    f1 = f1_score(batch.y.cpu(), pred.cpu(), average='weighted')
 
-        epoch_iter.set_description(f"TL: {train_loss:.4f} | VL: {valid_loss:.4f} | EaStp: {early_stopping_counter}/10")
+                    step_loss += loss.item()
+                    step_acc += acc
+                    step_f1 += f1
+
+            step_loss /= len(valid_loader)
+            step_acc /= len(valid_loader)
+            step_f1 /= len(valid_loader)
+
+            hist['valid_loss'].append(step_loss)
+            hist['valid_acc'].append(step_acc)
+            hist['valid_f1'].append(step_f1)
+            hist['valid_x'].append(epoch)
+
+        # plot the training loss and accuracy
+        fig, axs = plt.subplots(1, 3, figsize=(18, 5))
+        axs[0].plot(hist['train_loss'], label='train loss')
+        axs[0].plot(hist['valid_x'], hist['valid_loss'], label='valid loss')
+        axs[0].set_xlabel('Epoch')
+        axs[0].set_ylabel('Loss')
+        axs[0].legend(loc='upper right')
+        axs[0].set_title('Loss')
         
-        if early_stopping_counter >= 10:
-            print("Early stopping due to no improvement.")
-            break
-    
-    print("Training finished.")
+        axs[1].plot(hist['train_acc'], label='train acc')
+        axs[1].plot(hist['valid_x'], hist['valid_acc'], label='valid acc')
+        axs[1].set_xlabel('Epoch')
+        axs[1].set_ylabel('Accuracy')
+        axs[1].legend(loc='upper right')
+        axs[1].set_title('Accuracy')
+
+        axs[2].plot(hist['train_f1'], label='train f1')
+        axs[2].plot(hist['valid_x'], hist['valid_f1'], label='valid f1')
+        axs[2].set_xlabel('Epoch')
+        axs[2].set_ylabel('F1')
+        axs[2].legend(loc='upper right')
+        axs[2].set_title('F1')
+
+        fig.savefig('results.png')
+
+    print('Done!')

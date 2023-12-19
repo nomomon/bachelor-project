@@ -13,7 +13,7 @@ class GCN(torch.nn.Module):
         dense_neurons = model_params["model_dense_neurons"]
         embedding_size = model_params["model_embedding_size"]
         num_classes = model_params["model_num_classes"]
-        dropout = model_params["model_dropout"]
+        # dropout = model_params["model_dropout"]
         
         self.conv_layers = torch.nn.ModuleList()
         self.pooling_layers = torch.nn.ModuleList()
@@ -46,6 +46,5 @@ class GCN(torch.nn.Module):
 
         x = F.relu(self.line_1(x))
         x = F.relu(self.line_2(x))
-        x = F.log_softmax(self.line_3(x), dim=1)
         
         return x
