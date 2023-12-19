@@ -188,6 +188,6 @@ if __name__ == '__main__':
         axs[1][1].set_aspect('equal')
 
         fig.savefig('results.png')
-        plt.close(fig)
+        plt.close()
 
     print('Done!')
