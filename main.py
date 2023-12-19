@@ -47,7 +47,7 @@ if __name__ == '__main__':
     sampler = WeightedRandomSampler(
         weights=sample_weights,
         num_samples=len(sample_weights),
-        replacement=False
+        replacement=True
     )
 
     # Get loaders
