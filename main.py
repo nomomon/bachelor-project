@@ -108,10 +108,6 @@ if __name__ == '__main__':
             acc = accuracy_score(batch.y.cpu(), pred.cpu())
             f1 = f1_score(batch.y.cpu(), pred.cpu(), average='macro')
 
-            if torch.any(pred.cpu() > 2):
-                print("Error: pred > 2", pred.cpu())
-                quit()
-
             step_loss += loss.item()
             step_acc += acc
             step_f1 += f1
