@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     # Get sampler
     print("Getting sampler...")
-    sampler = ImbalancedSampler(train_set, num_samples=len(train_set) // 10)
+    sampler = ImbalancedSampler(train_set, num_samples=len(train_set))
 
     # Get loaders
     print("Getting loaders...")
