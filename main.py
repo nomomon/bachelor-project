@@ -32,26 +32,28 @@ if __name__ == '__main__':
         train_set.process()
         valid_set.process()
 
-    # # Get class weights
-    # print("Getting class weights...", end=' ')
-    # label_to_class = {"not depression": 0, "moderate": 1, "severe": 2}
-    # labels = read_tsv('data/silver/train.tsv')["label"].apply(lambda x: label_to_class[x]).values
-    # class_weights = 1 / np.bincount(labels)
-    # class_weights = class_weights / class_weights.sum()
-    # class_weights = torch.FloatTensor(class_weights).to(device)
-    # print(class_weights)
+    # Get class weights
+    print("Getting class weights...", end=' ')
+    label_to_class = {"not depression": 0, "moderate": 1, "severe": 2}
+    labels = read_tsv('data/silver/train.tsv')["label"].apply(lambda x: label_to_class[x]).values
+    class_weights = 1 / np.bincount(labels)
+    class_weights = class_weights / class_weights.sum()
+    print(class_weights)
 
-    # # Get sampler
-    # print("Getting sampler...")
-    # sampler = WeightedRandomSampler(
-    #     weights=class_weights,
-    #     num_samples=len(class_weights),
-    #     replacement=True
-    # )
+    sample_weights = class_weights[labels]
+    sample_weights = torch.FloatTensor(sample_weights).to(device)
+
+    # Get sampler
+    print("Getting sampler...")
+    sampler = WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(sample_weights),
+        replacement=True
+    )
 
     # Get loaders
     print("Getting loaders...")
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True) # sampler=sampler)
+    train_loader = DataLoader(train_set, batch_size=batch_size, sampler=sampler)
     valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False)
 
     # Get model
@@ -60,13 +62,13 @@ if __name__ == '__main__':
         feature_size=train_set[0].x.shape[1], # 300 or 768
         model_params={
             "model_layers": 3,
-            "model_dense_neurons": 32,
-            "model_embedding_size": 32,
+            "model_dense_neurons": 100,
+            "model_embedding_size": 64,
             "model_num_classes": 3,
         }
     ).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
 
     hist = {
@@ -172,5 +174,6 @@ if __name__ == '__main__':
         axs[2].set_title('F1')
 
         fig.savefig('results.png')
+        plt.close(fig)
 
     print('Done!')
