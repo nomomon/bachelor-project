@@ -12,12 +12,13 @@ from sklearn.metrics import (
     accuracy_score,
     confusion_matrix
 )
+from src.data.utils import read_tsv
 
 from src.features.dataset import DepressionDataset
 from src.models.GAT import GAT
 
 
-batch_size = 128
+batch_size = 32
 reset_dataset = False
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -52,8 +53,10 @@ if __name__ == '__main__':
         }
     ).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=.01)
+    criterion = torch.nn.CrossEntropyLoss(
+        # weight=torch.tensor([1, 1, 1.5]).to(device)
+    )
 
     hist = {
         'train_loss': [],
@@ -69,14 +72,14 @@ if __name__ == '__main__':
 
     # Start training
     print("Start training...")
-    for epoch in range(0, 100):
+    for epoch in range(0, 50):
         step_loss = 0
         step_acc = 0
         step_f1 = 0
         step_cm = None
         
         model.train()
-        for batch in tqdm(train_loader, desc=f'Epoch {epoch:3d} | Train'):
+        for batch in tqdm(train_loader, desc=f'Epoch {epoch:3d} ┬ Train'):
             batch = batch.to(device)
             optimizer.zero_grad()
 
@@ -92,15 +95,13 @@ if __name__ == '__main__':
             pred = out.argmax(dim=1)
             acc = accuracy_score(batch.y.cpu(), pred.cpu())
             f1 = f1_score(batch.y.cpu(), pred.cpu(), average='macro')
+            # roc_auc = roc_auc_score(batch.y.cpu(), pred.cpu(), average='weighted')
 
             step_loss += loss.item()
             step_acc += acc
             step_f1 += f1
-            batch_cm = confusion_matrix(batch.y.cpu(), pred.cpu())
-            if step_cm is None:
-                step_cm = batch_cm
-            else:
-                step_cm += batch_cm
+            batch_cm = confusion_matrix(batch.y.cpu(), pred.cpu(), labels=[0, 1, 2])
+            step_cm = batch_cm if step_cm is None else step_cm + batch_cm
 
         step_loss /= len(train_loader)
         step_acc /= len(train_loader)
@@ -112,7 +113,7 @@ if __name__ == '__main__':
         hist['train_cm'].append(step_cm)
 
 
-        if epoch % 5 == 0:
+        if epoch % 1 == 0:
             step_loss = 0
             step_acc = 0
             step_f1 = 0
@@ -120,7 +121,7 @@ if __name__ == '__main__':
 
             model.eval()
             with torch.no_grad():
-                for batch in tqdm(valid_loader, desc=f'Epoch {epoch:3d} | Valid'):
+                for batch in tqdm(valid_loader, desc='          └ Valid'):
                     batch = batch.to(device)
                     out = model(
                         batch.x,
@@ -136,11 +137,8 @@ if __name__ == '__main__':
                     step_loss += loss.item()
                     step_acc += acc
                     step_f1 += f1
-                    batch_cm = confusion_matrix(batch.y.cpu(), pred.cpu())
-                    if step_cm is None:
-                        step_cm = batch_cm
-                    else:
-                        step_cm += batch_cm
+                    batch_cm = confusion_matrix(batch.y.cpu(), pred.cpu(), labels=[0, 1, 2])
+                    step_cm = batch_cm if step_cm is None else step_cm + batch_cm
 
             step_loss /= len(valid_loader)
             step_acc /= len(valid_loader)
@@ -186,6 +184,13 @@ if __name__ == '__main__':
         axs[1][1].set_ylabel('Actual')
         axs[1][1].set_title(f'Valid Confusion Matrix (Epoch {hist["valid_x"][-1]:3d})')
         axs[1][1].set_aspect('equal')
+
+        sns.heatmap(hist['valid_cm'][-1] / hist['valid_cm'][-1].sum(axis=1)[:, np.newaxis], 
+                    annot=True, fmt='.2%', ax=axs[1][2])
+        axs[1][2].set_xlabel('Predicted')
+        axs[1][2].set_ylabel('Actual')
+        axs[1][2].set_title(f'Valid Confusion Matrix (Normed)')
+        axs[1][2].set_aspect('equal')
 
         fig.savefig('results.png')
         plt.close()
