@@ -27,7 +27,7 @@ from src.utils import clear_terminal
 def get_metrics(y_true, y_pred, set_type):
     acc = accuracy_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred, average='macro')
-    roc_auc = roc_auc_score(y_true, y_pred, average='macro')
+    roc_auc = roc_auc_score(y_true, y_pred, average='macro', multi_class='ovo')
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1, 2])
     return {
         f'{set_type}_acc': acc,
