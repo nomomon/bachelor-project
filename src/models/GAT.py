@@ -20,12 +20,11 @@ class GAT(torch.nn.Module):
 
         for i in range(self.n_layers):
             input_size = feature_size if i == 0 else embedding_size
-            self.atten_layers.append(GATConv(input_size, embedding_size, heads=4))
-            self.linear_layers.append(Linear(embedding_size * 4, embedding_size))
+            self.atten_layers.append(GATConv(input_size, embedding_size, heads=2))
+            self.linear_layers.append(Linear(embedding_size * 2, embedding_size))
 
         self.line_1 = Linear(embedding_size * 2, dense_neurons)
-        self.line_2 = Linear(dense_neurons, dense_neurons // 2)
-        self.line_3 = Linear(dense_neurons // 2, num_classes)
+        self.line_2 = Linear(dense_neurons, num_classes)
 
     def forward(self, x, edge_index, batch_index):
         global_representation = []
@@ -45,8 +44,6 @@ class GAT(torch.nn.Module):
 
         x = F.relu(self.line_1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.relu(self.line_2(x))
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.line_3(x)
+        x = self.line_2(x)
         
         return x

@@ -1,10 +1,12 @@
-import mlflow
-import torch
 from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+import torch
+from torch.optim.lr_scheduler import ExponentialLR
+from coral_pytorch.losses import corn_loss
+from coral_pytorch.dataset import corn_label_from_logits
 from torch_geometric.loader import DataLoader, ImbalancedSampler
 
 from sklearn.metrics import (
@@ -18,14 +20,14 @@ from src.features.dataset import DepressionDataset
 from src.models.GAT import GAT
 
 
-batch_size = 32
+batch_size = 64
 reset_dataset = False
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 if __name__ == '__main__':
 
-    train_set = DepressionDataset('train', 'bert', 'dependency')
-    valid_set = DepressionDataset('valid', 'bert', 'dependency')
+    train_set = DepressionDataset('train', 'w2v', 'dependency')
+    valid_set = DepressionDataset('valid', 'w2v', 'dependency')
 
     if reset_dataset:
         train_set.process()
@@ -33,7 +35,7 @@ if __name__ == '__main__':
 
     # Get sampler
     print("Getting sampler...")
-    sampler = ImbalancedSampler(train_set, num_samples=len(train_set))
+    sampler = ImbalancedSampler(train_set, num_samples=batch_size * 150)# len(train_set))
 
     # Get loaders
     print("Getting loaders...")
@@ -48,16 +50,14 @@ if __name__ == '__main__':
             "model_layers": 3,
             "model_dense_neurons": 64,
             "model_embedding_size": 128,
-            "model_num_classes": 3,
+            "model_num_classes": 3 - 1,
             "model_dropout": 0.5
         }
     ).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=.01)
-    criterion = torch.nn.CrossEntropyLoss(
-        # weight=torch.tensor([1, 1, 1.5]).to(device)
-    )
-
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-2)
+    scheduler = ExponentialLR(optimizer, gamma=0.9)
+                                 
     hist = {
         'train_loss': [],
         'train_acc': [],
@@ -88,11 +88,11 @@ if __name__ == '__main__':
                 batch.edge_index,
                 batch.batch
             )
-            loss = criterion(out, batch.y)
+            loss = corn_loss(out, batch.y, num_classes=3)
             loss.backward()
             optimizer.step()
 
-            pred = out.argmax(dim=1)
+            pred = corn_label_from_logits(out)
             acc = accuracy_score(batch.y.cpu(), pred.cpu())
             f1 = f1_score(batch.y.cpu(), pred.cpu(), average='macro')
             # roc_auc = roc_auc_score(batch.y.cpu(), pred.cpu(), average='weighted')
@@ -112,6 +112,7 @@ if __name__ == '__main__':
         hist['train_f1'].append(step_f1)
         hist['train_cm'].append(step_cm)
 
+        scheduler.step()
 
         if epoch % 1 == 0:
             step_loss = 0
@@ -128,9 +129,9 @@ if __name__ == '__main__':
                         batch.edge_index,
                         batch.batch
                     )
-                    loss = criterion(out, batch.y)
+                    loss = corn_loss(out, batch.y, num_classes=3)
 
-                    pred = out.argmax(dim=1)
+                    pred = corn_label_from_logits(out)
                     acc = accuracy_score(batch.y.cpu(), pred.cpu())
                     f1 = f1_score(batch.y.cpu(), pred.cpu(), average='macro')
 
@@ -171,7 +172,7 @@ if __name__ == '__main__':
         axs[0][2].set_xlabel('Epoch')
         axs[0][2].set_ylabel('F1')
         axs[0][2].legend(loc='upper right')
-        axs[0][2].set_title('F1')
+        axs[0][2].set_title('F1 (macro)')
 
         sns.heatmap(hist['train_cm'][-1], annot=True, fmt='d', ax=axs[1][0])
         axs[1][0].set_xlabel('Predicted')

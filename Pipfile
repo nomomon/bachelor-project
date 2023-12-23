@@ -17,6 +17,7 @@ spacy = "*"
 transformers = "*"
 jupyter = "*"
 seaborn = "*"
+coral-pytorch = "*"
 
 [dev-packages]
 
