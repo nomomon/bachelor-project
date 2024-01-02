@@ -10,9 +10,6 @@ from coral_pytorch.losses import corn_loss
 from coral_pytorch.dataset import corn_label_from_logits
 from torch_geometric.loader import DataLoader, ImbalancedSampler
 
-from mango import Tuner
-from mango.domain.distribution import loguniform
-
 from sklearn.metrics import (
     f1_score,
     accuracy_score,
@@ -27,11 +24,15 @@ def get_metrics(y_true, y_pred, set_type):
     acc = accuracy_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred, average='macro')
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1, 2])
-    return {
+
+    res = {
         f'{set_type}_acc': acc,
         f'{set_type}_f1_macro': f1,
-        f'{set_type}_cm': str(cm)
     }
+    for i in range(3):
+        for j in range(3):
+            res[f'{set_type}_cm_{i}_{j}'] = cm[i, j]
+    return res
 
 def run_epoch(model, loader, optimizer, device, epoch, set_type):
     y_true = []
@@ -39,7 +40,7 @@ def run_epoch(model, loader, optimizer, device, epoch, set_type):
     epoch_loss = 0
 
     if set_type == 'train':
-        desc = f'Epoch {epoch:2d} ┬ {set_type}'
+        desc = f'Epoch {epoch:3d} ┬ Train'
     elif set_type == 'valid':
         desc = '          └ Valid'
 
@@ -67,8 +68,6 @@ def run_epoch(model, loader, optimizer, device, epoch, set_type):
     return y_true, y_pred, epoch_loss
 
 def main(params):
-    params = params[0]
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     train_set = DepressionDataset('train', params["encoder_type"], params["graph_type"])
@@ -143,10 +142,10 @@ if __name__ == '__main__':
 
     param_space = dict(
         encoder_type = ['bert', 'w2v'],
-        graph_type = ['dependency'],
-        lr = loguniform(-5, 5),
-        weight_decay = loguniform(-5, 5),
-        gamma = loguniform(-5, 5),
+        graph_type = ['window'],
+        lr = [1e-3, 1e-4, 1e-5],
+        weight_decay = [1e-3, 1e-4, 1e-5],
+        gamma = [0.1, 0.2, 0.3, 0.4, 0.5],
         batch_size = [32, 64, 128, 256],
         model__layers = [3],
         model__dense_neurons = [16, 64, 128, 256],
@@ -156,6 +155,9 @@ if __name__ == '__main__':
         model__dropout = [0.1, 0.2, 0.3, 0.4, 0.5],
     )
 
-    tuner = Tuner(param_space, main)
-    results = tuner.minimize()
-    print(f'Optimal value of parameters: {results["best_params"]} and objective: {results["best_objective"]}')
+    # random search
+    while True:
+        params = {}
+        for k, v in param_space.items():
+            params[k] = v[np.random.randint(len(v))]
+        main(params)
