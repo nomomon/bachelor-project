@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a6dacab0833b47c2984f4fcd42d1feaf8c7fc2bfd136385b48ea9bc0c9969248"
+            "sha256": "5aab62ac4b13ffbce5befd68b39072d0a070f9576c47eeafd1240aae6ab7666e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -18,11 +18,11 @@
     "default": {
         "alembic": {
             "hashes": [
-                "sha256:a23974ea301c3ee52705db809c7413cecd165290c6679b9998dd6c74342ca23a",
-                "sha256:ab4b3b94d2e1e5f81e34be8a9b7b7575fc9dd5398fccb0bef351ec9b14872623"
+                "sha256:2edcc97bed0bd3272611ce3a98d98279e9c209e7186e43e75bbb1b2bdfdbcc43",
+                "sha256:4932c8558bf68f2ee92b9bbcb8218671c627064d5b08939437af6d77dc05e595"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==1.13.0"
+            "version": "==1.13.1"
         },
         "annotated-types": {
             "hashes": [
@@ -461,6 +461,14 @@
             "markers": "python_version >= '3.9'",
             "version": "==1.2.0"
         },
+        "coral-pytorch": {
+            "hashes": [
+                "sha256:212e94deeee17dc582aaba0c121fc1ef2a4324fa6c4a2a44aec148a783a7554b",
+                "sha256:79912119327d1f341fe01e1753b11c34c1b81ca8fff747884f3e9edd4c9653cd"
+            ],
+            "index": "pypi",
+            "version": "==1.4.0"
+        },
         "cycler": {
             "hashes": [
                 "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30",
@@ -719,11 +727,11 @@
         },
         "huggingface-hub": {
             "hashes": [
-                "sha256:176a4fc355a851c17550e7619488f383189727eab209534d7cef2114dae77b22",
-                "sha256:dba013f779da16f14b606492828f3760600a1e1801432d09fe1c33e50b825bb5"
+                "sha256:8c88c4c3c8853e22f2dfb4d84c3d493f4e1af52fb3856a90e1eeddcf191ddbb1",
+                "sha256:ecfdea395a8bc68cd160106c5bd857f7e010768d95f9e1862a779010cc304831"
             ],
             "markers": "python_full_version >= '3.8.0'",
-            "version": "==0.19.4"
+            "version": "==0.20.1"
         },
         "idna": {
             "hashes": [
@@ -1258,11 +1266,11 @@
         },
         "nbconvert": {
             "hashes": [
-                "sha256:22521cfcc10ba5755e44acb6a70d2bd8a891ce7aed6746481e10cd548b169e19",
-                "sha256:c6f61c86fca5b28bd17f4f9a308248e59fa2b54919e1589f6cc3575c5dfec2bd"
+                "sha256:2dc8267dbdfeedce2dcd34c9e3f1b51af18f43cb105549d1c5a18189ec23ba85",
+                "sha256:3c50eb2d326478cc90b8759cf2ab9dde3d892c6537cd6a5bc0991db8ef734bcc"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==7.13.0"
+            "version": "==7.13.1"
         },
         "nbformat": {
             "hashes": [

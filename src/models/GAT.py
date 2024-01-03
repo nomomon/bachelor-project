@@ -9,23 +9,23 @@ from torch_geometric.nn import (
 class GAT(torch.nn.Module):
     def __init__(self, feature_size, model_params):
         super().__init__()
-        self.n_layers = model_params["model_layers"]
-        dense_neurons = model_params["model_dense_neurons"]
-        embedding_size = model_params["model_embedding_size"]
-        num_classes = model_params["model_num_classes"]
-        self.dropout = model_params["model_dropout"]
+        self.n_layers = model_params["model__layers"]
+        dense_neurons = model_params["model__dense_neurons"]
+        embedding_size = model_params["model__embedding_size"]
+        num_classes = model_params["model__num_classes"]
+        n_heads = model_params["model__n_heads"]
+        self.dropout = model_params["model__dropout"]
         
         self.atten_layers = torch.nn.ModuleList()
         self.linear_layers = torch.nn.ModuleList()
 
         for i in range(self.n_layers):
             input_size = feature_size if i == 0 else embedding_size
-            self.atten_layers.append(GATConv(input_size, embedding_size, heads=4))
-            self.linear_layers.append(Linear(embedding_size * 4, embedding_size))
+            self.atten_layers.append(GATConv(input_size, embedding_size, heads=n_heads))
+            self.linear_layers.append(Linear(embedding_size * n_heads, embedding_size))
 
         self.line_1 = Linear(embedding_size * 2, dense_neurons)
-        self.line_2 = Linear(dense_neurons, dense_neurons // 2)
-        self.line_3 = Linear(dense_neurons // 2, num_classes)
+        self.line_2 = Linear(dense_neurons, num_classes)
 
     def forward(self, x, edge_index, batch_index):
         global_representation = []
@@ -41,12 +41,9 @@ class GAT(torch.nn.Module):
                 gap(x, batch_index)
             ], dim=1))
 
-        x = sum(global_representation)
-
+        x = sum(global_representation) / self.n_layers
         x = F.relu(self.line_1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.relu(self.line_2(x))
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.line_3(x)
+        x = self.line_2(x)
         
         return x

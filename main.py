@@ -1,33 +1,100 @@
-import mlflow
-import torch
 from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import mlflow
 
+import torch
+from coral_pytorch.losses import corn_loss
+from coral_pytorch.dataset import corn_label_from_logits
 from torch_geometric.loader import DataLoader, ImbalancedSampler
 
 from sklearn.metrics import (
     f1_score,
     accuracy_score,
-    confusion_matrix
+    confusion_matrix as sk_cm
 )
-from src.data.utils import read_tsv
 
 from src.features.dataset import DepressionDataset
 from src.models.GAT import GAT
+from src.utils import clear_terminal
 
+def get_metrics(y_true, y_pred, set_type):
+    acc = accuracy_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred, average='macro')
 
-batch_size = 32
-reset_dataset = False
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    res = {
+        f'{set_type}_acc': acc,
+        f'{set_type}_f1': f1,
+    }
 
-if __name__ == '__main__':
+    return res
 
-    train_set = DepressionDataset('train', 'bert', 'dependency')
-    valid_set = DepressionDataset('valid', 'bert', 'dependency')
+def plot_cm(train_cm, valid_cm, epoch):
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
 
-    if reset_dataset:
+    sns.heatmap(train_cm, annot=True, fmt='.2%', ax=axs[0], cbar=False, vmin=0, vmax=1)
+    axs[0].set_xlabel('Predicted')
+    axs[0].set_ylabel('Actual')
+    axs[0].set_title('Train')
+    axs[0].set_aspect('equal')
+
+    sns.heatmap(valid_cm, annot=True, fmt='.2%', ax=axs[1], cbar=False, vmin=0, vmax=1)
+    axs[1].set_xlabel('Predicted')
+    axs[1].set_ylabel('Actual')
+    axs[1].set_title('Valid')
+    axs[1].set_aspect('equal')
+
+    fig.suptitle(f'Confusion matrix at epoch {epoch}')
+
+    plt.tight_layout()
+
+    path = f'./reports/figures/cm_{epoch:03d}.png'
+    plt.savefig(path)
+    plt.close()
+
+    return path
+
+def run_epoch(model, loader, optimizer, device, epoch, set_type):
+    y_true = []
+    y_pred = []
+    epoch_loss = 0
+
+    if set_type == 'train':
+        desc = f'Epoch {epoch:3d} ┬ Train'
+    elif set_type == 'valid':
+        desc = '          └ Valid'
+
+    for batch in tqdm(loader, desc=desc):
+        batch = batch.to(device)
+        optimizer.zero_grad()
+        out = model(
+            batch.x,
+            batch.edge_index,
+            batch.batch
+        )
+        loss = corn_loss(out, batch.y, num_classes=3)
+        
+        if set_type == 'train':
+            loss.backward()
+            optimizer.step()
+
+        pred = corn_label_from_logits(out)
+
+        y_true += batch.y.cpu().tolist()
+        y_pred += pred.cpu().tolist()
+        epoch_loss += loss.item()
+    epoch_loss /= len(loader)
+
+    return y_true, y_pred, epoch_loss
+
+def main(params):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    train_set = DepressionDataset('train', params["encoder_type"], params["graph_type"])
+    valid_set = DepressionDataset('valid', params["encoder_type"], params["graph_type"])
+
+    if False:
         train_set.process()
         valid_set.process()
 
@@ -37,162 +104,84 @@ if __name__ == '__main__':
 
     # Get loaders
     print("Getting loaders...")
-    train_loader = DataLoader(train_set, batch_size=batch_size, sampler=sampler)
-    valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_set, batch_size=params["batch_size"], sampler=sampler)
+    valid_loader = DataLoader(valid_set, batch_size=params["batch_size"], shuffle=False)
 
     # Get model
     print("Getting model...")
     model = GAT(
         feature_size=train_set[0].x.shape[1], # 300 or 768
-        model_params={
-            "model_layers": 3,
-            "model_dense_neurons": 64,
-            "model_embedding_size": 128,
-            "model_num_classes": 3,
-            "model_dropout": 0.5
-        }
+        model_params=params,
     ).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=.01)
-    criterion = torch.nn.CrossEntropyLoss(
-        # weight=torch.tensor([1, 1, 1.5]).to(device)
-    )
+    optimizer = torch.optim.Adam(model.parameters(), lr=params["lr"], weight_decay=params["weight_decay"])
 
-    hist = {
-        'train_loss': [],
-        'train_acc': [],
-        'train_f1': [],
-        'train_cm': [],
-        'valid_loss': [],
-        'valid_acc': [],
-        'valid_f1': [],
-        'valid_cm': [],
-        'valid_x': [],
-    }
+    early_stopping_counter = 0
+    min_valid_loss = np.inf
 
     # Start training
-    print("Start training...")
-    for epoch in range(0, 50):
-        step_loss = 0
-        step_acc = 0
-        step_f1 = 0
-        step_cm = None
-        
-        model.train()
-        for batch in tqdm(train_loader, desc=f'Epoch {epoch:3d} ┬ Train'):
-            batch = batch.to(device)
-            optimizer.zero_grad()
+    with mlflow.start_run():
+        mlflow.log_params(params)
 
-            out = model(
-                batch.x,
-                batch.edge_index,
-                batch.batch
-            )
-            loss = criterion(out, batch.y)
-            loss.backward()
-            optimizer.step()
+        print("Start training...")
+        for epoch in range(0, 50):
+            # Train
+            model.train()
+            y_true, y_pred, train_loss = run_epoch(model, train_loader, optimizer, device, epoch, 'train')
+            train_cm = sk_cm(y_true, y_pred, labels=[0, 1, 2], normalize='true')
+            mlflow.log_metrics(get_metrics(y_true, y_pred, "train"), step=epoch)
+            mlflow.log_metric("train_loss", train_loss, step=epoch)
 
-            pred = out.argmax(dim=1)
-            acc = accuracy_score(batch.y.cpu(), pred.cpu())
-            f1 = f1_score(batch.y.cpu(), pred.cpu(), average='macro')
-            # roc_auc = roc_auc_score(batch.y.cpu(), pred.cpu(), average='weighted')
-
-            step_loss += loss.item()
-            step_acc += acc
-            step_f1 += f1
-            batch_cm = confusion_matrix(batch.y.cpu(), pred.cpu(), labels=[0, 1, 2])
-            step_cm = batch_cm if step_cm is None else step_cm + batch_cm
-
-        step_loss /= len(train_loader)
-        step_acc /= len(train_loader)
-        step_f1 /= len(train_loader)
-
-        hist['train_loss'].append(step_loss)
-        hist['train_acc'].append(step_acc)
-        hist['train_f1'].append(step_f1)
-        hist['train_cm'].append(step_cm)
-
-
-        if epoch % 1 == 0:
-            step_loss = 0
-            step_acc = 0
-            step_f1 = 0
-            step_cm = None
-
+            # Valid
             model.eval()
-            with torch.no_grad():
-                for batch in tqdm(valid_loader, desc='          └ Valid'):
-                    batch = batch.to(device)
-                    out = model(
-                        batch.x,
-                        batch.edge_index,
-                        batch.batch
-                    )
-                    loss = criterion(out, batch.y)
+            y_true, y_pred, valid_loss = run_epoch(model, valid_loader, optimizer, device, epoch, 'valid')
+            valid_cm = sk_cm(y_true, y_pred, labels=[0, 1, 2], normalize='true')
+            mlflow.log_metrics(get_metrics(y_true, y_pred, "valid"), step=epoch)
+            mlflow.log_metric("valid_loss", valid_loss, step=epoch)
 
-                    pred = out.argmax(dim=1)
-                    acc = accuracy_score(batch.y.cpu(), pred.cpu())
-                    f1 = f1_score(batch.y.cpu(), pred.cpu(), average='macro')
+            # Plot confusion matrix
+            cm_path = plot_cm(train_cm, valid_cm, epoch)
+            mlflow.log_artifact(cm_path, artifact_path="confusion_matrix")
 
-                    step_loss += loss.item()
-                    step_acc += acc
-                    step_f1 += f1
-                    batch_cm = confusion_matrix(batch.y.cpu(), pred.cpu(), labels=[0, 1, 2])
-                    step_cm = batch_cm if step_cm is None else step_cm + batch_cm
+            # Early stopping
+            if epoch > 0 and valid_loss > min_valid_loss:
+                early_stopping_counter += 1
+            else:
+                early_stopping_counter = 0
+                min_valid_loss = valid_loss
 
-            step_loss /= len(valid_loader)
-            step_acc /= len(valid_loader)
-            step_f1 /= len(valid_loader)
-
-            hist['valid_loss'].append(step_loss)
-            hist['valid_acc'].append(step_acc)
-            hist['valid_f1'].append(step_f1)
-            hist['valid_cm'].append(step_cm)
-            hist['valid_x'].append(epoch)
-
-        # plot the training loss and accuracy
-        fig, axs = plt.subplots(2, 3, figsize=(18, 12))
-        axs[0][0].plot(hist['train_loss'], label='train loss')
-        axs[0][0].plot(hist['valid_x'], hist['valid_loss'], label='valid loss')
-        axs[0][0].set_xlabel('Epoch')
-        axs[0][0].set_ylabel('Loss')
-        axs[0][0].legend(loc='upper right')
-        axs[0][0].set_title('Loss')
+            if early_stopping_counter >= 10:
+                print('Early stopping...')
+                mlflow.log_metric("early_stopping", 1, step=epoch)
+                break
         
-        axs[0][1].plot(hist['train_acc'], label='train acc')
-        axs[0][1].plot(hist['valid_x'], hist['valid_acc'], label='valid acc')
-        axs[0][1].set_xlabel('Epoch')
-        axs[0][1].set_ylabel('Accuracy')
-        axs[0][1].legend(loc='upper right')
-        axs[0][1].set_title('Accuracy')
+        if early_stopping_counter < 10:
+            mlflow.log_metric("early_stopping", 0, step=epoch)
 
-        axs[0][2].plot(hist['train_f1'], label='train f1')
-        axs[0][2].plot(hist['valid_x'], hist['valid_f1'], label='valid f1')
-        axs[0][2].set_xlabel('Epoch')
-        axs[0][2].set_ylabel('F1')
-        axs[0][2].legend(loc='upper right')
-        axs[0][2].set_title('F1')
+        print('Done!')
+        clear_terminal()
+    
+    return min_valid_loss
 
-        sns.heatmap(hist['train_cm'][-1], annot=True, fmt='d', ax=axs[1][0])
-        axs[1][0].set_xlabel('Predicted')
-        axs[1][0].set_ylabel('Actual')
-        axs[1][0].set_title(f'Train Confusion Matrix (Epoch {epoch:3d})')
-        axs[1][0].set_aspect('equal')
+if __name__ == '__main__':
 
-        sns.heatmap(hist['valid_cm'][-1], annot=True, fmt='d', ax=axs[1][1])
-        axs[1][1].set_xlabel('Predicted')
-        axs[1][1].set_ylabel('Actual')
-        axs[1][1].set_title(f'Valid Confusion Matrix (Epoch {hist["valid_x"][-1]:3d})')
-        axs[1][1].set_aspect('equal')
+    param_space = dict(
+        encoder_type = ['bert', 'w2v'],
+        graph_type = ['window', 'dependency'],
+        lr = [1e-3, 1e-4, 1e-5],
+        weight_decay = [1e-2, 1e-3, 1e-4, 1e-5],
+        batch_size = [32, 64, 128, 256],
+        model__layers = [3],
+        model__dense_neurons = [32, 64, 128],
+        model__embedding_size = [32, 64, 128],
+        model__num_classes = [3 - 1], # -1 because of coral
+        model__n_heads = [1, 3, 5],
+        model__dropout = [0.1, 0.3, 0.5],
+    )
 
-        sns.heatmap(hist['valid_cm'][-1] / hist['valid_cm'][-1].sum(axis=1)[:, np.newaxis], 
-                    annot=True, fmt='.2%', ax=axs[1][2])
-        axs[1][2].set_xlabel('Predicted')
-        axs[1][2].set_ylabel('Actual')
-        axs[1][2].set_title(f'Valid Confusion Matrix (Normed)')
-        axs[1][2].set_aspect('equal')
-
-        fig.savefig('results.png')
-        plt.close()
-
-    print('Done!')
+    # random search
+    while True:
+        params = {}
+        for k, v in param_space.items():
+            params[k] = v[np.random.randint(len(v))]
+        main(params)
