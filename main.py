@@ -5,7 +5,6 @@ import seaborn as sns
 import mlflow
 
 import torch
-from torch.optim.lr_scheduler import ExponentialLR
 from coral_pytorch.losses import corn_loss
 from coral_pytorch.dataset import corn_label_from_logits
 from torch_geometric.loader import DataLoader, ImbalancedSampler
@@ -13,7 +12,7 @@ from torch_geometric.loader import DataLoader, ImbalancedSampler
 from sklearn.metrics import (
     f1_score,
     accuracy_score,
-    confusion_matrix
+    confusion_matrix as sk_cm
 )
 
 from src.features.dataset import DepressionDataset
@@ -23,16 +22,38 @@ from src.utils import clear_terminal
 def get_metrics(y_true, y_pred, set_type):
     acc = accuracy_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred, average='macro')
-    cm = confusion_matrix(y_true, y_pred, labels=[0, 1, 2])
 
     res = {
         f'{set_type}_acc': acc,
-        f'{set_type}_f1_macro': f1,
+        f'{set_type}_f1': f1,
     }
-    for i in range(3):
-        for j in range(3):
-            res[f'{set_type}_cm_{i}_{j}'] = cm[i, j]
+
     return res
+
+def plot_cm(train_cm, valid_cm, epoch):
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+
+    sns.heatmap(train_cm, annot=True, fmt='.2%', ax=axs[0], cbar=False, vmin=0, vmax=1)
+    axs[0].set_xlabel('Predicted')
+    axs[0].set_ylabel('Actual')
+    axs[0].set_title('Train')
+    axs[0].set_aspect('equal')
+
+    sns.heatmap(valid_cm, annot=True, fmt='.2%', ax=axs[1], cbar=False, vmin=0, vmax=1)
+    axs[1].set_xlabel('Predicted')
+    axs[1].set_ylabel('Actual')
+    axs[1].set_title('Valid')
+    axs[1].set_aspect('equal')
+
+    fig.suptitle(f'Confusion matrix at epoch {epoch}')
+
+    plt.tight_layout()
+
+    path = f'./reports/figures/cm_{epoch:03d}.png'
+    plt.savefig(path)
+    plt.close()
+
+    return path
 
 def run_epoch(model, loader, optimizer, device, epoch, set_type):
     y_true = []
@@ -94,7 +115,6 @@ def main(params):
     ).to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=params["lr"], weight_decay=params["weight_decay"])
-    scheduler = ExponentialLR(optimizer, gamma=params["gamma"])
 
     early_stopping_counter = 0
     min_valid_loss = np.inf
@@ -108,15 +128,20 @@ def main(params):
             # Train
             model.train()
             y_true, y_pred, train_loss = run_epoch(model, train_loader, optimizer, device, epoch, 'train')
+            train_cm = sk_cm(y_true, y_pred, labels=[0, 1, 2], normalize='true')
             mlflow.log_metrics(get_metrics(y_true, y_pred, "train"), step=epoch)
             mlflow.log_metric("train_loss", train_loss, step=epoch)
-            scheduler.step()
 
             # Valid
             model.eval()
             y_true, y_pred, valid_loss = run_epoch(model, valid_loader, optimizer, device, epoch, 'valid')
+            valid_cm = sk_cm(y_true, y_pred, labels=[0, 1, 2], normalize='true')
             mlflow.log_metrics(get_metrics(y_true, y_pred, "valid"), step=epoch)
             mlflow.log_metric("valid_loss", valid_loss, step=epoch)
+
+            # Plot confusion matrix
+            cm_path = plot_cm(train_cm, valid_cm, epoch)
+            mlflow.log_artifact(cm_path, artifact_path="confusion_matrix")
 
             # Early stopping
             if epoch > 0 and valid_loss > min_valid_loss:
@@ -142,17 +167,16 @@ if __name__ == '__main__':
 
     param_space = dict(
         encoder_type = ['bert', 'w2v'],
-        graph_type = ['window'],
+        graph_type = ['window', 'dependency'],
         lr = [1e-3, 1e-4, 1e-5],
-        weight_decay = [1e-3, 1e-4, 1e-5],
-        gamma = [0.1, 0.2, 0.3, 0.4, 0.5],
+        weight_decay = [1e-2, 1e-3, 1e-4, 1e-5],
         batch_size = [32, 64, 128, 256],
         model__layers = [3],
-        model__dense_neurons = [16, 64, 128, 256],
-        model__embedding_size = [16, 64, 128, 256],
+        model__dense_neurons = [32, 64, 128],
+        model__embedding_size = [32, 64, 128],
         model__num_classes = [3 - 1], # -1 because of coral
-        model__n_heads = [1, 3, 4, 5],
-        model__dropout = [0.1, 0.2, 0.3, 0.4, 0.5],
+        model__n_heads = [1, 3, 5],
+        model__dropout = [0.1, 0.3, 0.5],
     )
 
     # random search
