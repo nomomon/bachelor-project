@@ -18,6 +18,7 @@ transformers = "*"
 jupyter = "*"
 seaborn = "*"
 coral-pytorch = "*"
+bayesian-optimization = "*"
 
 [dev-packages]
 

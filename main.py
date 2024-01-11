@@ -15,6 +15,8 @@ from sklearn.metrics import (
     confusion_matrix as sk_cm
 )
 
+from bayes_opt import BayesianOptimization
+
 from src.features.dataset import DepressionDataset
 from src.models.GAT import GAT
 from src.utils import clear_terminal
@@ -150,12 +152,12 @@ def main(params):
                 early_stopping_counter = 0
                 min_valid_loss = valid_loss
 
-            if early_stopping_counter >= 10:
+            if early_stopping_counter >= 3:
                 print('Early stopping...')
                 mlflow.log_metric("early_stopping", 1, step=epoch)
                 break
         
-        if early_stopping_counter < 10:
+        if early_stopping_counter < 3:
             mlflow.log_metric("early_stopping", 0, step=epoch)
 
         print('Done!')
@@ -163,25 +165,76 @@ def main(params):
     
     return min_valid_loss
 
+def main_fixed(**params):
+    new_params = {
+        "encoder_type": "bert" if params["encoder_type"] > 0.5 else "w2v",
+        "graph_type": "dependency" if params["graph_type"] > 0.5 else "window",
+        "lr": params["lr"],
+        "weight_decay": params["weight_decay"],
+        "batch_size": int(params["batch_size"]),
+        "model__layers": 3,
+        "model__dense_neurons": int(params["model__dense_neurons"]),
+        "model__embedding_size": int(params["model__embedding_size"]),
+        "model__num_classes": 3 - 1, # because of coral
+        "model__n_heads": int(params["model__n_heads"]),
+        "model__dropout": params["model__dropout"],
+    }
+
+    return - main(new_params)
+
+def load_prev_runs(optimizer):
+    # get the latest runs from mlflow
+    runs = mlflow.search_runs(
+        experiment_ids="0",
+        order_by=["attributes.start_time desc"],
+        max_results=50,
+    )
+
+    # load the parameters from the runs
+    for _, row in runs.iterrows():
+        row_params = {
+            k.split(".", 1)[1]: v for k, v in row.items() if k.startswith("params.")
+        }
+        params = {}
+
+        params["encoder_type"] = 1 if row_params["encoder_type"] == "bert" else 0
+        params["graph_type"] = 1 if row_params["graph_type"] == "dependency" else 0
+        params["lr"] = float(row_params["lr"])
+        params["weight_decay"] = float(row_params["weight_decay"])
+        params["batch_size"] = int(row_params["batch_size"])
+        params["model__dense_neurons"] = int(row_params["model__dense_neurons"])
+        params["model__embedding_size"] = int(row_params["model__embedding_size"])
+        params["model__n_heads"] = int(row_params["model__n_heads"])
+        params["model__dropout"] = float(row_params["model__dropout"])
+
+        optimizer.register(
+            params=params,
+            target=- row["metrics.valid_loss"],
+        )
+
 if __name__ == '__main__':
 
     param_space = dict(
-        encoder_type = ['bert', 'w2v'],
-        graph_type = ['window', 'dependency'],
-        lr = [1e-3, 1e-4, 1e-5],
-        weight_decay = [1e-2, 1e-3, 1e-4, 1e-5],
-        batch_size = [32, 64, 128, 256],
-        model__layers = [3],
-        model__dense_neurons = [32, 64, 128],
-        model__embedding_size = [32, 64, 128],
-        model__num_classes = [3 - 1], # -1 because of coral
-        model__n_heads = [1, 3, 5],
-        model__dropout = [0.1, 0.3, 0.5],
+        encoder_type = [0, 1],
+        graph_type = [0, 1],
+        lr = [1, 1e-5],
+        weight_decay = [1, 1e-5],
+        batch_size = [16, 256],
+        model__dense_neurons = [16,  256],
+        model__embedding_size = [16, 256],
+        model__n_heads = [1, 5],
+        model__dropout = [0.001, 0.5],
     )
 
-    # random search
-    while True:
-        params = {}
-        for k, v in param_space.items():
-            params[k] = v[np.random.randint(len(v))]
-        main(params)
+    # bayesian optimization
+    optimizer = BayesianOptimization(
+        f=main_fixed,
+        pbounds=param_space,
+        random_state=1,
+    )
+    
+    load_prev_runs(optimizer)    
+
+    optimizer.maximize(
+        n_iter=50
+    )
