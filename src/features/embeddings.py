@@ -1,12 +1,15 @@
 import gensim.downloader as gensim_api
 import torch
-from transformers import BertTokenizer, BertModel
+from transformers import RobertaTokenizer, RobertaModel
 import numpy as np
 
 w2v_model = gensim_api.load("word2vec-google-news-300")
 
-bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-bert_model = BertModel.from_pretrained('bert-base-uncased')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+model_name = 'roberta-base'
+bert_tokenizer = RobertaTokenizer.from_pretrained(model_name)
+bert_model = RobertaModel.from_pretrained(model_name).to(device)
 bert_model.eval()
 
 
@@ -53,10 +56,11 @@ def get_bert_embeddings(nodes):
     assert len(nodes) <= 510
     tokens = ['[CLS]', *nodes, '[SEP]']
     token_ids = bert_tokenizer.convert_tokens_to_ids(tokens)
-    input_tensor = torch.tensor([token_ids])
+    input_tensor = torch.tensor([token_ids]).to(device)
 
     with torch.no_grad():
         last_hidden_state = bert_model(input_tensor)[0][0]
+    last_hidden_state = last_hidden_state.cpu()
 
     return last_hidden_state[1:-1]
 

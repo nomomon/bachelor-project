@@ -2,8 +2,8 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.nn import GATConv, Linear, TopKPooling
 from torch_geometric.nn import (
-    global_mean_pool as gap, 
-    global_max_pool as gmp
+    global_max_pool as gmp, 
+    global_add_pool as gap
 )
 
 class GAT(torch.nn.Module):
@@ -28,7 +28,6 @@ class GAT(torch.nn.Module):
         self.line_2 = Linear(dense_neurons, num_classes)
 
     def forward(self, x, edge_index, batch_index):
-        global_representation = []
 
         for i in range(self.n_layers):
             x = self.atten_layers[i](x, edge_index)
@@ -36,12 +35,12 @@ class GAT(torch.nn.Module):
             x = self.linear_layers[i](x)
             x = F.relu(x)
 
-            global_representation.append(torch.cat([
-                gmp(x, batch_index), 
-                gap(x, batch_index)
-            ], dim=1))
+        x = torch.cat([
+            gmp(x, batch_index), 
+            gap(x, batch_index)
+        ], dim=1)
 
-        x = sum(global_representation) / self.n_layers
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = F.relu(self.line_1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.line_2(x)
