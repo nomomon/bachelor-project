@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import mlflow
+import json
 
 import torch
 from coral_pytorch.losses import corn_loss
@@ -11,6 +12,8 @@ from torch_geometric.loader import DataLoader, ImbalancedSampler
 
 from sklearn.metrics import (
     f1_score,
+    precision_score,
+    recall_score,
     accuracy_score,
     confusion_matrix as sk_cm
 )
@@ -24,36 +27,40 @@ from src.utils import clear_terminal
 def get_metrics(y_true, y_pred, set_type):
     acc = accuracy_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred, average='macro')
+    precision = precision_score(y_true, y_pred, average='macro')
+    recall = recall_score(y_true, y_pred, average='macro')
 
     res = {
         f'{set_type}_acc': acc,
         f'{set_type}_f1': f1,
+        f'{set_type}_precision': precision,
+        f'{set_type}_recall': recall,
     }
 
     return res
 
-def plot_cm(train_cm, valid_cm, epoch):
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+def plot_cm(cm_s, epoch, root="./reports/figures"):
+    fig, axs = plt.subplots(1, len(cm_s), figsize=(5 * len(cm_s), 5))
 
-    sns.heatmap(train_cm, annot=True, fmt='.2%', ax=axs[0], cbar=False, vmin=0, vmax=1)
-    axs[0].set_xlabel('Predicted')
-    axs[0].set_ylabel('Actual')
-    axs[0].set_title('Train')
-    axs[0].set_aspect('equal')
-
-    sns.heatmap(valid_cm, annot=True, fmt='.2%', ax=axs[1], cbar=False, vmin=0, vmax=1)
-    axs[1].set_xlabel('Predicted')
-    axs[1].set_ylabel('Actual')
-    axs[1].set_title('Valid')
-    axs[1].set_aspect('equal')
+    for i, [cm, label] in enumerate(cm_s):
+        ax = axs[i] if len(cm_s) > 1 else axs
+            
+        sns.heatmap(cm, annot=True, fmt='.2%', ax=ax, cbar=False, vmin=0, vmax=1)
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('Actual')
+        ax.set_title(label)
+        ax.set_aspect('equal')
 
     fig.suptitle(f'Confusion matrix at epoch {epoch}')
 
     plt.tight_layout()
 
-    path = f'./reports/figures/cm_{epoch:03d}.png'
-    plt.savefig(path)
-    plt.close()
+    try:
+        path = f'{root}/cm_{epoch:03d}.png'
+        plt.savefig(path)
+        plt.close()
+    except:
+        pass
 
     return path
 
@@ -171,10 +178,10 @@ def main_fixed(**params):
         "graph_type": "dependency" if params["graph_type"] > 0.5 else "window",
         "lr": params["lr"],
         "weight_decay": params["weight_decay"],
-        "batch_size": int(params["batch_size"]),
+        "batch_size": nearest_pow2(params["batch_size"]),
         "model__layers": 3,
-        "model__dense_neurons": int(params["model__dense_neurons"]),
-        "model__embedding_size": int(params["model__embedding_size"]),
+        "model__dense_neurons": nearest_pow2(params["model__dense_neurons"]),
+        "model__embedding_size": nearest_pow2(params["model__embedding_size"]),
         "model__num_classes": 3 - 1, # because of coral
         "model__n_heads": int(params["model__n_heads"]),
         "model__dropout": params["model__dropout"],
@@ -182,12 +189,16 @@ def main_fixed(**params):
 
     return - main(new_params)
 
+def nearest_pow2(x):
+    x = int(x)
+    return 2 ** int(np.log2(x))
+
 def load_prev_runs(optimizer):
     # get the latest runs from mlflow
     runs = mlflow.search_runs(
         experiment_ids="0",
         order_by=["attributes.start_time desc"],
-        max_results=50,
+        max_results=500,
     )
 
     # load the parameters from the runs
@@ -209,18 +220,22 @@ def load_prev_runs(optimizer):
 
         optimizer.register(
             params=params,
-            target=- row["metrics.valid_loss"],
+            target=- float(row["metrics.valid_loss"]),
         )
 
-if __name__ == '__main__':
+if __name__ == '__main__' and False:
+    # with open('./config.json', 'r') as f:
+    #     config = json.load(f)
+
+    # mlflow.set_tracking_uri(config["mlflow_uri"])
 
     param_space = dict(
         encoder_type = [0, 1],
         graph_type = [0, 1],
-        lr = [1, 1e-5],
-        weight_decay = [1, 1e-5],
+        lr = [1e-5, 1],
+        weight_decay = [1e-5, 1],
         batch_size = [16, 256],
-        model__dense_neurons = [16,  256],
+        model__dense_neurons = [16, 256],
         model__embedding_size = [16, 256],
         model__n_heads = [1, 5],
         model__dropout = [0.001, 0.5],

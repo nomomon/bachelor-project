@@ -22,7 +22,7 @@ def window_edges(n_nodes, radius):
 
 class DepressionDataset(Dataset):
     def __init__(self, set_type, encoder_type, graph_type, 
-                 w_radius=5, p_radius=None, q_radius=None):
+                 w_radius=5, p_radius=None, q_radius=None, root_path="."):
         """
         Args:
             set_type (str): 'train', 'valid', or 'test'
@@ -34,8 +34,9 @@ class DepressionDataset(Dataset):
             q_radius (int): radius for middle graph (default: None)
         """
         
-        root = osp.join('data', 'gold', set_type)
+        root = osp.join(root_path, 'data', 'gold', set_type)
 
+        self.root_path = root_path
         self.set_type = set_type
         self.encoder_type = encoder_type
         self.graph_type = graph_type
@@ -44,7 +45,7 @@ class DepressionDataset(Dataset):
 
         assert set_type in ['train', 'valid', 'test', 'development']
         assert encoder_type in ['bert', 'w2v']
-        assert graph_type in ['dependency', 'window', 'multi_level']
+        assert graph_type in ['dependency', 'window', 'multi_level', "other"]
 
         if graph_type == 'window':
             assert w_radius is not None
@@ -57,7 +58,7 @@ class DepressionDataset(Dataset):
 
     @property
     def raw_file_names(self):
-        n_dirs = read_tsv(f'data/silver/{self.set_type}.tsv').shape[0]
+        n_dirs = read_tsv(f'{self.root_path}/data/silver/{self.set_type}.tsv').shape[0]
         dirs = [str(i) for i in range(n_dirs)]
 
         return dirs
@@ -111,18 +112,24 @@ class DepressionDataset(Dataset):
                 f'{self.encoder_type}_{self.graph_type}_{i}.pt'
             )
 
-            if self.graph_type not in ['multi_level']:
+            if self.graph_type in ["window", "dependency"]:
                 data = Data(
                     edge_index=edges,
                     x=node_features,
                     y=label
                 )
                 torch.save(data, data_path)
-            else:
+            elif self.graph_type in ['multi_level']:
                 data = Data(
                     edge_index_q=q_edges,
                     edge_index_p=p_edges,
                     edge_index_f=f_edges,
+                    x=node_features,
+                    y=label
+                )
+                torch.save(data, data_path)
+            else:
+                data = Data(
                     x=node_features,
                     y=label
                 )
