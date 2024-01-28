@@ -129,6 +129,7 @@ def main(params):
     # Start training
     with mlflow.start_run():
         mlflow.log_params(params)
+        mlflow.log_param("loss_func", "cross_entropy")
 
         print("Start training...")
         for epoch in range(0, 50):
@@ -147,7 +148,10 @@ def main(params):
             mlflow.log_metric("valid_loss", valid_loss, step=epoch)
 
             # Plot confusion matrix
-            cm_path = plot_cm(train_cm, valid_cm, epoch)
+            cm_path = plot_cm([
+                [train_cm, "Train"],
+                [valid_cm, "Valid"]
+            ], epoch) 
             mlflow.log_artifact(cm_path, artifact_path="confusion_matrix")
 
             # Early stopping
