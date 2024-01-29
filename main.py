@@ -1,9 +1,9 @@
+from pandas import json_normalize
 from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import mlflow
-import json
 
 import torch
 from coral_pytorch.losses import corn_loss
@@ -11,33 +11,20 @@ from coral_pytorch.dataset import corn_label_from_logits
 from torch_geometric.loader import DataLoader, ImbalancedSampler
 
 from sklearn.metrics import (
-    f1_score,
-    precision_score,
-    recall_score,
-    accuracy_score,
+    classification_report,
     confusion_matrix as sk_cm
 )
-
-from bayes_opt import BayesianOptimization
 
 from src.features.dataset import DepressionDataset
 from src.models.GAT import GAT
 from src.utils import clear_terminal
 
-def get_metrics(y_true, y_pred, set_type):
-    acc = accuracy_score(y_true, y_pred)
-    f1 = f1_score(y_true, y_pred, average='macro')
-    precision = precision_score(y_true, y_pred, average='macro')
-    recall = recall_score(y_true, y_pred, average='macro')
-
-    res = {
-        f'{set_type}_acc': acc,
-        f'{set_type}_f1': f1,
-        f'{set_type}_precision': precision,
-        f'{set_type}_recall': recall,
-    }
-
-    return res
+def get_metrics(target, prediction, set_type):
+    report = classification_report(target, prediction, output_dict=True)
+    report = json_normalize(report)
+    report.columns = [f"{set_type}.{c}" for c in report.columns]
+    report = report.iloc[0].to_dict()
+    return report
 
 def plot_cm(cm_s, epoch, root="./reports/figures"):
     fig, axs = plt.subplots(1, len(cm_s), figsize=(5 * len(cm_s), 5))
@@ -174,85 +161,3 @@ def main(params):
         clear_terminal()
     
     return min_valid_loss
-
-def main_fixed(**params):
-    new_params = {
-        "encoder_type": "bert" if params["encoder_type"] > 0.5 else "w2v",
-        "graph_type": "dependency" if params["graph_type"] > 0.5 else "window",
-        "lr": params["lr"],
-        "weight_decay": params["weight_decay"],
-        "batch_size": nearest_pow2(params["batch_size"]),
-        "model__layers": 3,
-        "model__dense_neurons": nearest_pow2(params["model__dense_neurons"]),
-        "model__embedding_size": nearest_pow2(params["model__embedding_size"]),
-        "model__num_classes": 3 - 1, # because of coral
-        "model__n_heads": int(params["model__n_heads"]),
-        "model__dropout": params["model__dropout"],
-    }
-
-    return - main(new_params)
-
-def nearest_pow2(x):
-    x = int(x)
-    return 2 ** int(np.log2(x))
-
-def load_prev_runs(optimizer):
-    # get the latest runs from mlflow
-    runs = mlflow.search_runs(
-        experiment_ids="0",
-        order_by=["attributes.start_time desc"],
-        max_results=500,
-    )
-
-    # load the parameters from the runs
-    for _, row in runs.iterrows():
-        row_params = {
-            k.split(".", 1)[1]: v for k, v in row.items() if k.startswith("params.")
-        }
-        params = {}
-
-        params["encoder_type"] = 1 if row_params["encoder_type"] == "bert" else 0
-        params["graph_type"] = 1 if row_params["graph_type"] == "dependency" else 0
-        params["lr"] = float(row_params["lr"])
-        params["weight_decay"] = float(row_params["weight_decay"])
-        params["batch_size"] = int(row_params["batch_size"])
-        params["model__dense_neurons"] = int(row_params["model__dense_neurons"])
-        params["model__embedding_size"] = int(row_params["model__embedding_size"])
-        params["model__n_heads"] = int(row_params["model__n_heads"])
-        params["model__dropout"] = float(row_params["model__dropout"])
-
-        optimizer.register(
-            params=params,
-            target=- float(row["metrics.valid_loss"]),
-        )
-
-if __name__ == '__main__' and False:
-    # with open('./config.json', 'r') as f:
-    #     config = json.load(f)
-
-    # mlflow.set_tracking_uri(config["mlflow_uri"])
-
-    param_space = dict(
-        encoder_type = [0, 1],
-        graph_type = [0, 1],
-        lr = [1e-5, 1],
-        weight_decay = [1e-5, 1],
-        batch_size = [16, 256],
-        model__dense_neurons = [16, 256],
-        model__embedding_size = [16, 256],
-        model__n_heads = [1, 5],
-        model__dropout = [0.001, 0.5],
-    )
-
-    # bayesian optimization
-    optimizer = BayesianOptimization(
-        f=main_fixed,
-        pbounds=param_space,
-        random_state=1,
-    )
-    
-    load_prev_runs(optimizer)    
-
-    optimizer.maximize(
-        n_iter=50
-    )
